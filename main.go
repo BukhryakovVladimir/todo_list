@@ -28,7 +28,7 @@ func init() {
 		panic(err)
 	}
 
-	fmt.Println("connecte to postgree")
+	fmt.Println("connected to postgree")
 }
 
 func main() {
