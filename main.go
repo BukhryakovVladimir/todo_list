@@ -16,7 +16,7 @@ var db *sql.DB
 func init() {
 	var err error
 
-	psql := "postgresql://postgres:postgres@localhost:2022/postgres?sslmode=disable"
+	psql := "postgresql://postgres:postgres@localhost:2022/testdb?sslmode=disable"
 
 	db, err = sql.Open("postgres", psql)
 
