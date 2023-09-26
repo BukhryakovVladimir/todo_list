@@ -1,10 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 
 	"database/sql"
 
@@ -31,10 +35,78 @@ func init() {
 	fmt.Println("connected to postgree")
 }
 
+func writeDB(w http.ResponseWriter, r *http.Request) {
+	query := `INSERT INTO task(task_description)
+			   VALUES($1);`
+
+	bytesBody, errb := io.ReadAll(r.Body)
+	if errb != nil {
+		panic(errb)
+	}
+
+	stringBody := string(bytesBody)
+
+	fmt.Println(stringBody)
+
+	_, err := db.Exec(query, stringBody)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func readDB(w http.ResponseWriter, r *http.Request) {
+	query := `SELECT task_description FROM task;`
+	fmt.Println("get request")
+	rows, err := db.Query(query)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	tasks := make([]string, 0)
+	for rows.Next() {
+		var task_description string
+		if err := rows.Scan(&task_description); err != nil {
+			log.Fatal(err)
+		}
+		//w.WriteHeader()
+		tasks = append(tasks, task_description)
+		fmt.Println(task_description)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	resp, err := json.Marshal(tasks)
+
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	w.Write(resp)
+	fmt.Println(tasks)
+}
+
 func main() {
 	r := chi.NewRouter()
 
-	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*", "null"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
+	r.Route("/api", func(r chi.Router) {
+
+		r.Post("/", writeDB)
+
+		r.Get("/get", readDB)
 
 	})
 
