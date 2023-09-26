@@ -11,8 +11,6 @@ form.addEventListener("submit", e => {
         mode: "no-cors",
         body: input
     })
-
-    console.log(JSON.stringify(response.body));
 });
 
 let button = document.getElementById("show");
@@ -25,5 +23,15 @@ button.addEventListener("click", e => {
     },
 })
    .then(response => response.json())
-   .then(data => console.log(data))
-})
+   .then(data => create(data))
+})  
+
+function create(data) {
+    let str
+    let ul = document.getElementById("ulist")
+    for (let i = 0; i < data.length; i++) {
+        str = "<li>" + JSON.stringify(data[i]) + "</li>"
+        ul.insertAdjacentHTML("beforeend", str);
+        console.log(str);
+    }
+}
