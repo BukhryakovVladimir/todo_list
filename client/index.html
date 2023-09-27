@@ -7,13 +7,18 @@
 </head>
 <body>
     <ul></ul>
-    <form action="" id="form">
-        <input type="text" id="input" required>
-        <button type="submit">Add1</button>
+    <form action="" id="addForm">
+        <input type="text" id="addInput" placeholder="Task" required>
+        <button type="submit">Add</button>
     </form>
 
-    <button type="button" id="show">Show to-do list</button>
-    <ul id="ulist"></ul>
+    <form action="" id="deleteForm">
+        <input type="text" id="deleteInput" placeholder="Row number" required>
+        <button type="submit" id="deleteButton">Delete</button>
+    </form>
+
+    <button type="button" id="show">To Do List Reload</button>
+    <ol id="olist"><header>To Do List</header></ol>
     <script src="index.js"></script>
 </body>
 </html>

@@ -46,7 +46,26 @@ func writeDB(w http.ResponseWriter, r *http.Request) {
 
 	stringBody := string(bytesBody)
 
-	fmt.Println(stringBody)
+	_, err := db.Exec(query, stringBody)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func deleteDB(w http.ResponseWriter, r *http.Request) {
+	query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
+			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1)`
+
+	bytesBody, errb := io.ReadAll(r.Body)
+
+	if errb != nil {
+		panic(errb)
+	}
+
+	stringBody := string(bytesBody)
+
+	fmt.Println(stringBody, query)
 
 	_, err := db.Exec(query, stringBody)
 
@@ -57,7 +76,7 @@ func writeDB(w http.ResponseWriter, r *http.Request) {
 
 func readDB(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT task_description FROM task;`
-	fmt.Println("get request")
+
 	rows, err := db.Query(query)
 	if err != nil {
 		panic(err)
@@ -71,7 +90,6 @@ func readDB(w http.ResponseWriter, r *http.Request) {
 		}
 		//w.WriteHeader()
 		tasks = append(tasks, task_description)
-		fmt.Println(task_description)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -85,7 +103,6 @@ func readDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(resp)
-	fmt.Println(tasks)
 }
 
 func main() {
@@ -104,9 +121,11 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 
-		r.Post("/", writeDB)
+		r.Post("/write", writeDB)
 
-		r.Get("/get", readDB)
+		r.Post("/delete", deleteDB)
+
+		r.Get("/read", readDB)
 
 	})
 
