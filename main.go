@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 
@@ -16,6 +18,11 @@ import (
 )
 
 var db *sql.DB
+
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 func init() {
 	var err error
@@ -35,7 +42,7 @@ func init() {
 	fmt.Println("connected to postgree")
 }
 
-func writeDB(w http.ResponseWriter, r *http.Request) {
+func write_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `INSERT INTO task(task_description)
 			   VALUES($1);`
 
@@ -53,9 +60,9 @@ func writeDB(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteDB(w http.ResponseWriter, r *http.Request) {
+func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
-			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1)`
+			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1);`
 
 	bytesBody, errb := io.ReadAll(r.Body)
 
@@ -74,7 +81,7 @@ func deleteDB(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func readDB(w http.ResponseWriter, r *http.Request) {
+func read_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT task_description FROM task;`
 
 	rows, err := db.Query(query)
@@ -105,6 +112,44 @@ func readDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+func signup_userDB(w http.ResponseWriter, r *http.Request) {
+	// bytesBody, errb := io.ReadAll(r.Body)
+	// if errb != nil {
+	// 	panic(errb)
+	// }
+	var user User
+
+	bytesBody, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		panic(err)
+	}
+
+	json.Unmarshal(bytesBody, &user)
+
+	userQuery := `INSERT INTO "user" (username)
+				  VALUES ($1::text);`
+
+	credentialsQuery := `INSERT INTO credentials (password)
+						 VALUES($1::text);`
+	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+
+	fmt.Println(user.Username, string(password))
+
+	_, errUser := db.Exec(userQuery, user.Username)
+	if errUser != nil {
+		fmt.Println("1")
+		panic(errUser)
+	}
+
+	_, errCredentials := db.Exec(credentialsQuery, string(password))
+	if errCredentials != nil {
+		fmt.Println("2")
+		panic(errCredentials)
+	}
+	fmt.Println(r.Body, "\n", user)
+}
+
 func main() {
 	r := chi.NewRouter()
 
@@ -121,11 +166,13 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 
-		r.Post("/write", writeDB)
+		r.Post("/write", write_taskDB)
 
-		r.Post("/delete", deleteDB)
+		r.Post("/delete", delete_taskDB)
 
-		r.Get("/read", readDB)
+		r.Post("/signup", signup_userDB)
+
+		r.Get("/read", read_taskDB)
 
 	})
 
