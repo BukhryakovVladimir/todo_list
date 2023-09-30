@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -15,8 +18,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// База данных
 var db *sql.DB
 
+// Структура пользователя
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// создаёт подключение к БД testdb. Выполняеся единожды
 func init() {
 	var err error
 
@@ -35,7 +46,8 @@ func init() {
 	fmt.Println("connected to postgree")
 }
 
-func writeDB(w http.ResponseWriter, r *http.Request) {
+// записывает task_description в таблицу task
+func write_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `INSERT INTO task(task_description)
 			   VALUES($1);`
 
@@ -51,11 +63,14 @@ func writeDB(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	defer r.Body.Close()
 }
 
-func deleteDB(w http.ResponseWriter, r *http.Request) {
+// удаляет строку таблицы task по номеру строки
+func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
-			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1)`
+			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1);`
 
 	bytesBody, errb := io.ReadAll(r.Body)
 
@@ -72,9 +87,12 @@ func deleteDB(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	defer r.Body.Close()
 }
 
-func readDB(w http.ResponseWriter, r *http.Request) {
+// Возвращает строки task_descirption из таблицы task
+func read_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT task_description FROM task;`
 
 	rows, err := db.Query(query)
@@ -88,7 +106,7 @@ func readDB(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&task_description); err != nil {
 			log.Fatal(err)
 		}
-		//w.WriteHeader()
+
 		tasks = append(tasks, task_description)
 	}
 
@@ -103,6 +121,57 @@ func readDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(resp)
+	defer r.Body.Close()
+}
+
+// Добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials
+// Обе операции должны выполнится, поэтому находятся в одной транзакции
+// Отношение таблиц	 1 to 1
+func signup_userDB(w http.ResponseWriter, r *http.Request) {
+
+	var user User
+
+	bytesBody, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		panic(err)
+	}
+
+	json.Unmarshal(bytesBody, &user)
+
+	userQuery := `INSERT INTO "user" (username)
+				  VALUES ($1::text);`
+
+	credentialsQuery := `INSERT INTO credentials (password)
+						 VALUES($1::text);`
+
+	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+
+	fmt.Println(user.Username, string(password))
+
+	ctx := context.Background()
+
+	txn, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = txn.ExecContext(ctx, userQuery, user.Username)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = txn.ExecContext(ctx, credentialsQuery, password)
+	if err != nil {
+		panic(err)
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		panic(err)
+	}
+
+	defer r.Body.Close()
 }
 
 func main() {
@@ -119,13 +188,16 @@ func main() {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
+	//Go-chi маршрутизатор
 	r.Route("/api", func(r chi.Router) {
 
-		r.Post("/write", writeDB)
+		r.Post("/write", write_taskDB)
 
-		r.Post("/delete", deleteDB)
+		r.Post("/delete", delete_taskDB)
 
-		r.Get("/read", readDB)
+		r.Post("/signup", signup_userDB)
+
+		r.Get("/read", read_taskDB)
 
 	})
 
