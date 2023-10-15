@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -15,8 +16,13 @@ import (
 
 	"database/sql"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	_ "github.com/lib/pq"
 )
+
+// move to separate file
+const secretKey = "chechevitsa"
 
 // База данных
 var db *sql.DB
@@ -71,7 +77,9 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
 			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1);`
-
+	// if task_description is equal it deletes every task_description instead for correct row, this is unacceptable, need to fix
+	//I can do this by adding id to task table, but the serial is not decrementing on delete, and so the id will overflow pretty soon
+	// I am completely mentally stable
 	bytesBody, errb := io.ReadAll(r.Body)
 
 	if errb != nil {
@@ -174,18 +182,133 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 }
 
+// MEMO: return to task deletion by row problem after doing this
+func login_userDB(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	var user User
+
+	bytesBody, err := io.ReadAll(r.Body)
+
+	json.Unmarshal(bytesBody, &user)
+
+	if err != nil {
+		panic(err)
+	}
+
+	queryUsername := `SELECT user_id 
+					 FROM "user"
+					 WHERE username = ($1::text)
+					 `
+	queryPassword := `SELECT password
+					  FROM credentials
+					  WHERE user_id = $1`
+
+	row := db.QueryRow(queryUsername, user.Username)
+	var userId string
+	if err := row.Scan(&userId); err != nil {
+		w.WriteHeader(404)
+		w.Write([]byte("Username not found"))
+		//panic(err) //Do not panic, write response that no user with such login was found instead
+	}
+	fmt.Println(userId)
+
+	if err := row.Err(); err != nil {
+		panic(err)
+	}
+
+	row = db.QueryRow(queryPassword, userId)
+	var password_hash string
+	if err := row.Scan(&password_hash); err != nil {
+		w.WriteHeader(404)
+		w.Write([]byte("Username not found"))
+		defer r.Body.Close()
+	}
+	fmt.Println(password_hash)
+	if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
+		w.WriteHeader(401)
+		w.Write([]byte("Incorrect password"))
+		defer r.Body.Close()
+	}
+
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    userId,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+	})
+
+	token, err := claims.SignedString([]byte(secretKey))
+
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Could not login"))
+		defer r.Body.Close()
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     "jwt",
+		Value:    token,
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: false,
+	}
+
+	http.SetCookie(w, &tokenCookie)
+	w.WriteHeader(200)
+	w.Write([]byte("Successfully loged in"))
+
+}
+
+func user_userDB(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	cookie, err := r.Cookie("jwt")
+
+	if err != nil {
+		resp, _ := json.Marshal("")
+		w.WriteHeader(404)
+		w.Write(resp)
+		defer r.Body.Close()
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secretKey), nil
+		})
+
+		fmt.Println(token)
+		if err != nil {
+			w.WriteHeader(403)
+			w.Write([]byte("unauthenticated"))
+			defer r.Body.Close()
+		}
+		fmt.Println(token)
+		claims := token.Claims.(*jwt.RegisteredClaims)
+		fmt.Println(claims.Issuer)
+		query := `SELECT username FROM "user" WHERE user_id = $1`
+
+		var username string
+
+		if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
+			w.WriteHeader(403)
+			w.Write([]byte("username not found"))
+			defer r.Body.Close()
+		}
+		resp, _ := json.Marshal(username)
+		w.WriteHeader(200)
+		w.Write(resp)
+		fmt.Println(username)
+		fmt.Println(claims.Issuer)
+	}
+
+}
+
 func main() {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*", "null"},
+		AllowedOrigins: []string{"https://*", "http://*", "http://localhost"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		// /MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
 	//Go-chi маршрутизатор
@@ -198,6 +321,10 @@ func main() {
 		r.Post("/signup", signup_userDB)
 
 		r.Get("/read", read_taskDB)
+
+		r.Post("/login", login_userDB)
+
+		r.Get("/user", user_userDB)
 
 	})
 
