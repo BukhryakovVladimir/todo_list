@@ -7,6 +7,7 @@
 </head>
 <body>
     <ul></ul>
+    <p id="unauthorized">You have to log in to use to do list</p>
     <form action="" id="addForm">
         <input type="text" id="addInput" placeholder="Task" required>
         <button type="submit">Add</button>
@@ -16,9 +17,13 @@
         <input type="text" id="deleteInput" placeholder="Row number" required>
         <button type="submit" id="deleteButton">Delete</button>
     </form>
+    <button type="button" id="indexLogout" 
+    onclick='document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api;"; window.location.reload()'
+    >Log out</button>
     <button type="button" id="indexLogin" onclick="window.location.href = 'login.html';">Log in</button>
     <button type="button" id="show">To Do List Reload</button>
     <ol id="olist"><header>To Do List</header></ol>
     <script src="index.js"></script>
+    <script src="getUser.js"></script>
 </body>
 </html>
