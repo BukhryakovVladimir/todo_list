@@ -53,83 +53,178 @@ func init() {
 }
 
 // записывает task_description в таблицу task
+// поменять, чтобы записывал по токену и по айдишнику
 func write_taskDB(w http.ResponseWriter, r *http.Request) {
-	query := `INSERT INTO task(task_description)
-			   VALUES($1);`
-
-	bytesBody, errb := io.ReadAll(r.Body)
-	if errb != nil {
-		panic(errb)
-	}
-
-	stringBody := string(bytesBody)
-
-	_, err := db.Exec(query, stringBody)
-
-	if err != nil {
-		panic(err)
-	}
 
 	defer r.Body.Close()
+	cookie, err := r.Cookie("jwt")
+
+	if err != nil {
+		resp, _ := json.Marshal("Not logged in")
+		w.WriteHeader(404)
+		w.Write(resp)
+		//defer r.Body.Close()
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secretKey), nil
+		})
+
+		if err != nil {
+			w.WriteHeader(403)
+			w.Write([]byte("unauthenticated"))
+			defer r.Body.Close()
+		}
+
+		claims := token.Claims.(*jwt.RegisteredClaims)
+
+		query := `INSERT INTO task(user_id, task_description)
+			   	 VALUES($1, $2);`
+
+		bytesBody, errb := io.ReadAll(r.Body)
+		if errb != nil {
+			panic(errb)
+		}
+
+		stringBody := string(bytesBody)
+
+		_, err = db.Exec(query, claims.Issuer, stringBody)
+
+		if err != nil {
+			panic(err)
+		}
+
+		// var username string
+
+		// if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
+		// 	w.WriteHeader(403)
+		// 	w.Write([]byte("username not found"))
+		// 	defer r.Body.Close()
+		// }
+		resp, _ := json.Marshal("Write successful")
+		w.WriteHeader(200)
+		w.Write(resp)
+	}
+
+	//defer r.Body.Close()
 }
 
 // удаляет строку таблицы task по номеру строки
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
-	query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
-			  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1);`
-	// if task_description is equal it deletes every task_description instead for correct row, this is unacceptable, need to fix
-	//I can do this by adding id to task table, but the serial is not decrementing on delete, and so the id will overflow pretty soon
-	// I am completely mentally stable
-	bytesBody, errb := io.ReadAll(r.Body)
+	defer r.Body.Close()
 
-	if errb != nil {
-		panic(errb)
-	}
-
-	stringBody := string(bytesBody)
-
-	fmt.Println(stringBody, query)
-
-	_, err := db.Exec(query, stringBody)
+	cookie, err := r.Cookie("jwt")
 
 	if err != nil {
-		panic(err)
+		resp, _ := json.Marshal("Not logged in")
+		w.WriteHeader(404)
+		w.Write(resp)
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secretKey), nil
+		})
+
+		claims := token.Claims.(*jwt.RegisteredClaims)
+
+		query := `DELETE FROM task
+		WHERE task_id IN (
+		SELECT task_id
+		FROM (
+		SELECT task_id, user_id, row_number() OVER (PARTITION BY user_id ORDER BY task_id) AS rnum
+		FROM task
+		)
+		WHERE user_id = $1 and rnum = $2
+		)`
+
+		bytesBody, err := io.ReadAll(r.Body)
+
+		if err != nil {
+			panic(err)
+		}
+
+		stringBody := string(bytesBody)
+
+		_, err = db.Exec(query, claims.Issuer, stringBody)
+
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(claims.Issuer, stringBody)
+		resp, _ := json.Marshal("delete successfully")
+		w.WriteHeader(200)
+		w.Write(resp)
 	}
 
-	defer r.Body.Close()
+	// if err != nil {
+
+	// }
+
+	// query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
+	// 		  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1);`
+	// // if task_description is equal it deletes every task_description instead for correct row, this is unacceptable, need to fix
+	// //I can do this by adding id to task table, but the serial is not decrementing on delete, and so the id will overflow pretty soon
+	// // I am completely mentally stable
+	// bytesBody, errb := io.ReadAll(r.Body)
+
+	// if errb != nil {
+	// 	panic(errb)
+	// }
+
+	// stringBody := string(bytesBody)
+
+	// fmt.Println(stringBody, query)
+
+	// _, err := db.Exec(query, stringBody)
+
+	// if err != nil {
+	// 	panic(err)
+	// }
+
 }
 
 // Возвращает строки task_descirption из таблицы task
 func read_taskDB(w http.ResponseWriter, r *http.Request) {
-	query := `SELECT task_description FROM task;`
+	defer r.Body.Close()
 
-	rows, err := db.Query(query)
+	cookie, err := r.Cookie("jwt")
+
 	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	tasks := make([]string, 0)
-	for rows.Next() {
-		var task_description string
-		if err := rows.Scan(&task_description); err != nil {
+		w.WriteHeader(404)
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secretKey), nil
+		})
+
+		claims := token.Claims.(*jwt.RegisteredClaims)
+
+		query := `SELECT task_description FROM task WHERE user_id = $1;`
+
+		rows, err := db.Query(query, claims.Issuer)
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+		tasks := make([]string, 0)
+		for rows.Next() {
+			var task_description string
+			if err := rows.Scan(&task_description); err != nil {
+				log.Fatal(err)
+			}
+
+			tasks = append(tasks, task_description)
+		}
+
+		if err := rows.Err(); err != nil {
 			log.Fatal(err)
 		}
 
-		tasks = append(tasks, task_description)
+		resp, err := json.Marshal(tasks)
+
+		if err := rows.Err(); err != nil {
+			log.Fatal(err)
+		}
+
+		w.Write(resp)
 	}
-
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	resp, err := json.Marshal(tasks)
-
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	w.Write(resp)
-	defer r.Body.Close()
 }
 
 // Добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials
@@ -155,7 +250,7 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 
-	fmt.Println(user.Username, string(password))
+	//fmt.Println(user.Username, string(password))
 
 	ctx := context.Background()
 
@@ -210,7 +305,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Username not found"))
 		//panic(err) //Do not panic, write response that no user with such login was found instead
 	}
-	fmt.Println(userId)
+	//fmt.Println(userId)
 
 	if err := row.Err(); err != nil {
 		panic(err)
@@ -223,7 +318,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Username not found"))
 		defer r.Body.Close()
 	}
-	fmt.Println(password_hash)
+	//fmt.Println(password_hash)
 	if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
 		w.WriteHeader(401)
 		w.Write([]byte("Incorrect password"))
@@ -270,15 +365,15 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 			return []byte(secretKey), nil
 		})
 
-		fmt.Println(token)
+		//fmt.Println(token)
 		if err != nil {
 			w.WriteHeader(403)
 			w.Write([]byte("unauthenticated"))
 			defer r.Body.Close()
 		}
-		fmt.Println(token)
+		//fmt.Println(token)
 		claims := token.Claims.(*jwt.RegisteredClaims)
-		fmt.Println(claims.Issuer)
+		//fmt.Println(claims.Issuer)
 		query := `SELECT username FROM "user" WHERE user_id = $1`
 
 		var username string
@@ -291,8 +386,8 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 		resp, _ := json.Marshal(username)
 		w.WriteHeader(200)
 		w.Write(resp)
-		fmt.Println(username)
-		fmt.Println(claims.Issuer)
+		//fmt.Println(username)
+		//fmt.Println(claims.Issuer)
 	}
 
 }
