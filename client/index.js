@@ -12,6 +12,7 @@ addForm.addEventListener("submit", (e) => {
   fetch("http://localhost:3000/api/write", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     //mode: "no-cors", //probably can delete that
     body: addInput
   });
@@ -31,6 +32,7 @@ deleteForm.addEventListener("submit", (e) => {
   fetch("http://localhost:3000/api/delete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: deleteInput
   });
 
@@ -71,6 +73,7 @@ function getList() {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
   })
     .then((response) => response.json())
     .then((data) => create(data));
