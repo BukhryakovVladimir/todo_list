@@ -7,6 +7,7 @@ async function getUser() {
     let olist = document.getElementById("olist");
     let unauthorized = document.getElementById("unauthorized");
     let logout = document.getElementById("indexLogout");
+    let signedAs = document.getElementById("signedAs");
     const response = await fetch(
       "http://localhost:3000/api/user",
       {
@@ -34,5 +35,6 @@ async function getUser() {
         olist.style.display = "block";
         unauthorized.style.display = "none";
         logout.style.display = "block";
+        signedAs.innerHTML = "Currently signed as: " + username;
     }
 }
