@@ -232,6 +232,8 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 // Отношение таблиц	 1 to 1
 func signup_userDB(w http.ResponseWriter, r *http.Request) {
 
+	defer r.Body.Close()
+
 	var user User
 
 	bytesBody, err := io.ReadAll(r.Body)
@@ -251,30 +253,32 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 
 	//fmt.Println(user.Username, string(password))
-
 	ctx := context.Background()
-
-	txn, err := db.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = txn.ExecContext(ctx, userQuery, user.Username)
+	_, err = tx.ExecContext(ctx, userQuery, user.Username)
+	if err != nil {
+		tx.Rollback()
+		// w.Header()
+		// w.Write() smth smth user already exists
+		return
+	}
+
+	_, err = tx.ExecContext(ctx, credentialsQuery, password)
+	if err != nil {
+		tx.Rollback()
+		// w.Header()
+		// w.Write() smth smth user already exists
+		return
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		panic(err)
 	}
-
-	_, err = txn.ExecContext(ctx, credentialsQuery, password)
-	if err != nil {
-		panic(err)
-	}
-
-	err = txn.Commit()
-	if err != nil {
-		panic(err)
-	}
-
-	defer r.Body.Close()
 }
 
 // MEMO: return to task deletion by row problem after doing this
@@ -304,51 +308,51 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("Username not found"))
 		//panic(err) //Do not panic, write response that no user with such login was found instead
+	} else {
+		//fmt.Println(userId)
+
+		if err := row.Err(); err != nil {
+			panic(err)
+		}
+
+		row = db.QueryRow(queryPassword, userId)
+		var password_hash string
+		if err := row.Scan(&password_hash); err != nil {
+			w.WriteHeader(404)
+			w.Write([]byte("Username not found"))
+		} else {
+			//fmt.Println(password_hash)
+			if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
+				w.WriteHeader(401)
+				w.Write([]byte("Incorrect password"))
+			} else {
+
+				claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+					Issuer:    userId,
+					ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+				})
+
+				token, err := claims.SignedString([]byte(secretKey))
+
+				if err != nil {
+					w.WriteHeader(500)
+					w.Write([]byte("Could not login"))
+					defer r.Body.Close()
+				}
+
+				tokenCookie := http.Cookie{
+					Name:     "jwt",
+					Value:    token,
+					Expires:  time.Now().Add(time.Hour * 24 * 30),
+					HttpOnly: false,
+				}
+
+				http.SetCookie(w, &tokenCookie)
+				w.WriteHeader(200)
+				w.Write([]byte("Successfully loged in"))
+			}
+		}
 	}
-	//fmt.Println(userId)
-
-	if err := row.Err(); err != nil {
-		panic(err)
-	}
-
-	row = db.QueryRow(queryPassword, userId)
-	var password_hash string
-	if err := row.Scan(&password_hash); err != nil {
-		w.WriteHeader(404)
-		w.Write([]byte("Username not found"))
-		defer r.Body.Close()
-	}
-	//fmt.Println(password_hash)
-	if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
-		w.WriteHeader(401)
-		w.Write([]byte("Incorrect password"))
-		defer r.Body.Close()
-	}
-
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Issuer:    userId,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
-	})
-
-	token, err := claims.SignedString([]byte(secretKey))
-
-	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte("Could not login"))
-		defer r.Body.Close()
-	}
-
-	tokenCookie := http.Cookie{
-		Name:     "jwt",
-		Value:    token,
-		Expires:  time.Now().Add(time.Hour * 24 * 30),
-		HttpOnly: false,
-	}
-
-	http.SetCookie(w, &tokenCookie)
-	w.WriteHeader(200)
-	w.Write([]byte("Successfully loged in"))
-
 }
 
 func user_userDB(w http.ResponseWriter, r *http.Request) {
