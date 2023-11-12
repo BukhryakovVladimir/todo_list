@@ -1,30 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>To Do List</title>
-</head>
-<body>
+    <link rel="stylesheet" href="./style/index.css" />
+  </head>
+  <body>
     <ul></ul>
     <p id="unauthorized">You have to log in to use to do list</p>
     <p id="signedAs"></p>
     <form action="" id="addForm">
-        <input type="text" id="addInput" placeholder="Task" required>
-        <button type="submit">Add</button>
+      <input type="text" id="addInput" placeholder="Task" required />
+      <button type="submit" id="addButton">Add</button>
     </form>
 
     <form action="" id="deleteForm">
-        <input type="text" id="deleteInput" placeholder="Row number" required>
-        <button type="submit" id="deleteButton">Delete</button>
+      <input type="text" id="deleteInput" placeholder="Row number" required />
+      <button type="submit" id="deleteButton">Delete</button>
     </form>
-    <button type="button" id="indexLogout" 
-    onclick='document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api;"; window.location.reload()'
-    >Log out</button>
-    <button type="button" id="indexLogin" onclick="window.location.href = 'login.html';">Log in</button>
-    <button type="button" id="show">To Do List Reload</button>
-    <ol id="olist"><header>To Do List</header></ol>
+    <button
+      type="button"
+      id="indexLogout"
+      onclick='document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api;"; window.location.reload()'
+    >
+      Log out
+    </button>
+    <button
+      type="button"
+      id="indexLogin"
+      onclick="window.location.href = 'login.html';"
+    >
+      Log in
+    </button>
+    <button type="button" id="reload">Reload list</button>
+    <ol id="olist">
+      <header>To Do List</header>
+    </ol>
     <script src="index.js"></script>
     <script src="getUser.js"></script>
-</body>
+  </body>
 </html>
