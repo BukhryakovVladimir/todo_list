@@ -56,29 +56,6 @@ button:active {
   transform: translateY(0);
 }
 
-#loginUsername {
-  position: relative;
-  left: 12.6rem;
-}
-
-#loginPassword {
-  position: relative;
-  top: 3rem;
-  right: 6.8rem;
-}
-
-#loginSubmit {
-  position: relative;
-  height: 2rem;
-  top: 5.5rem;
-  right: 30.2em;
-}
-
-a {
-  position: relative;
-  top: 6rem;
-}
-
 a:link,
 a:visited {
   background-color: #bdf886;
@@ -94,4 +71,106 @@ a:hover,
 a:active {
   background-color: #bdf886;
   color: rgb(4, 0, 255);
+}
+
+@media all and (max-width: 1920px) {
+  #loginUsername {
+    position: relative;
+    top: 1rem;
+    left: 12.6rem;
+  }
+
+  #loginPassword {
+    position: relative;
+    top: 4rem;
+    right: 6.8rem;
+  }
+
+  #loginSubmit {
+    position: relative;
+    height: 2rem;
+    top: 7rem;
+    right: 23em;
+  }
+
+  a {
+    position: relative;
+    top: 8rem;
+  }
+}
+
+@media all and (max-width: 831px) {
+  #loginUsername {
+    position: relative;
+    top: 1rem;
+    left: 10rem;
+  }
+
+  #loginPassword {
+    position: relative;
+    top: 4rem;
+    right: 9.5rem;
+  }
+
+  #loginSubmit {
+    position: relative;
+    height: 2rem;
+    top: 5rem;
+    right: 1em;
+    width: 7em;
+  }
+
+  a {
+    position: relative;
+    top: 6rem;
+  }
+}
+
+@media all and (max-width: 724px) {
+  #loginUsername {
+    position: relative;
+    top: 1rem;
+    left: 0rem;
+  }
+
+  #loginPassword {
+    position: relative;
+    top: 2rem;
+    left: 3.2rem;
+  }
+
+  #loginSubmit {
+    position: relative;
+    height: 2rem;
+    top: 5rem;
+    right: 12em;
+    width: 7em;
+  }
+}
+
+@media all and (max-width: 485px) {
+  #loginUsername {
+    position: relative;
+    top: 1rem;
+    left: 0rem;
+  }
+
+  #loginPassword {
+    position: relative;
+    top: 2rem;
+    left: 0rem;
+  }
+
+  #loginSubmit {
+    position: relative;
+    height: 2rem;
+    top: 3rem;
+    right: 1em;
+    width: 7em;
+  }
+
+  a {
+    position: relative;
+    top: 4rem;
+  }
 }

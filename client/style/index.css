@@ -3,11 +3,6 @@
   font-size: 1.15em;
 }
 
-body {
-  text-align: center;
-  background-color: #ffffff;
-}
-
 button {
   align-items: center;
   background-color: #bdf886;
@@ -56,42 +51,307 @@ button:active {
   transform: translateY(0);
 }
 
-#addButton {
-  bottom: 0.21em;
-  position: relative;
-  width: 3.6em;
-  height: 2.4em;
+@media all and (max-width: 1920px) {
+
+  body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #addForm, #deleteForm {
+    margin: 0 auto;
+    position: relative;
+  }
+  
+  #deleteForm {
+    top: 1em;
+  }
+
+  #addButton, #deleteButton {
+    position: relative;
+    bottom: 0.21em;
+    width: 3.6em;
+    height: 2.4em;
+  }
+  
+  #deleteButton {
+    background-color: #ff6464;
+  }
+  
+  #indexLogin {
+    position: relative;
+    top: 0.1rem;
+    width: 7rem;
+  }
+  
+  #indexLogout {
+    position: relative;
+    left: 7.6rem;
+    bottom: 11rem;
+    width: 7rem;
+  }
+  
+  #show {
+    position: relative;
+    top: 2rem;
+    height: 2.5rem;
+    background-color: #ffffff;
+  }
+  
+  /* #unauthorized {
+    position: relative;
+    left: 2rem;
+  } */
+  
+  ul {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 10px;
+    position: relative;
+    top: 2rem;
+    right: 1rem;
+    width: 30rem;
+    counter-reset: li;
+    word-wrap: break-word;
+  }
+  
+  ul header {
+    position: relative;
+    left: 8.6rem;
+  }
+  
+  li {
+    display: table-row;
+    padding: 2em;
+  }
+  
+  li:before {
+    margin-right: 10px;
+    content: counter(li);
+    width: 1.6em;
+    counter-increment: li;
+    display: table-cell;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media all and (max-width: 1170px) {
+
+  body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #addForm, #deleteForm {
+    margin: 0 auto;
+    position: relative;
+  }
+  
+  #deleteForm {
+    top: 1em;
+  }
+
+  #addInput, #deleteInput {
+    width: 300px;
+  }
+
+  #addButton, #deleteButton {
+    position: relative;
+    bottom: 0.21em;
+    width: 3.6em;
+    height: 2.4em;
+  }
+  
+  #deleteButton {
+    background-color: #ff6464;
+  }
+  
+  #indexLogin {
+    position: relative;
+    top: 0.1rem;
+    width: 7rem;
+  }
+  
+  #indexLogout {
+    position: relative;
+    left: 6.6rem;
+    bottom: 11rem;
+    width: 7rem;
+  }
+  
+  #show {
+    position: relative;
+    top: 2rem;
+    height: 2.5rem;
+    background-color: #ffffff;
+  }
+  
+  /* #unauthorized {
+    position: relative;
+    left: 2rem;
+  } */
+  
+  ul {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 10px;
+    position: relative;
+    top: 2rem;
+    width: 20rem;
+    counter-reset: li;
+    word-wrap: break-word;
+  }
+  
+  ul header {
+    position: relative;
+    left: 6.5rem;
+  }
+  
+  li {
+    display: table-row;
+    padding: 2em;
+  }
+  
+  li:before {
+    margin-right: 10px;
+    content: counter(li);
+    width: 1.6em;
+    counter-increment: li;
+    display: table-cell;
+  }
 }
 
-#deleteButton {
-  bottom: 0.21em;
-  position: relative;
-  width: 3.6em;
-  height: 2.4em;
-  background-color: #ff6464;
-}
 
-#indexLogin {
-  position: absolute;
-  top: 0.1em;
-  right: 0.1em;
-}
+/* 
+@media all and (max-width: 1170px) {
+  body {
+    width: 500px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-#indexLogout {
-  position: absolute;
-  top: 0.1em;
-  right: 10em;
-}
+  #signedAs {
+    position: relative;
+    top: 0.5em;
+  }
+  
+  #addInput {
+    width: 300px;
+  }
 
-#deleteForm {
-  position: relative;
-  top: 1em;
-}
+  #deleteInput {
+    width: 300px;
+  }
 
-#reload {
-  position: relative;
-  left: 11em;
-  top: 3.53em;
-  height: 2.01em;
-  background-color: #ffffff;
-}
+  #addButton {
+    bottom: 0.21em;
+    position: relative;
+    width: 3.6em;
+    height: 2.4em;
+  }
+  
+  #deleteButton {
+    bottom: 0.21em;
+    position: relative;
+    width: 3.6em;
+    height: 2.4em;
+    background-color: #ff6464;
+  }
+  
+  #indexLogin {
+    position: absolute;
+    top: 0.1rem;
+    left: 0rem;
+    width: 7rem;
+  }
+  
+  #indexLogout {
+    position: absolute;
+    top: 0.1em;
+    left: 0rem;
+    height: 2.8rem;
+    width: 7rem;
+  }
+  
+  #deleteForm {
+    position: relative;
+    top: 1em;
+  }
+  
+  #show {
+    position: relative;
+    top: 2rem;
+    height: 2.5rem;
+    background-color: #ffffff;
+  }
+  
+  #unauthorized {
+    position: relative;
+    display: block;
+    top: 2rem;
+    width: 300px;
+    word-wrap: break-word;
+  }
+  
+  ul {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 10px;
+    position: relative;
+    top: 2rem;
+    right: 3.1rem;
+    width: 30rem;
+    counter-reset: li;
+    word-wrap: break-word;
+  }
+  
+  ul header {
+    position: relative;
+    left: 8rem;
+  }
+  
+  li {
+    display: table-row;
+    padding: 2em;
+  }
+  
+  li:before {
+    margin-right: 10px;
+    content: counter(li);
+    width: 1.6em;
+    counter-increment: li;
+    border: 1px solid black;
+    display: table-cell;
+  }
+} */
