@@ -242,46 +242,62 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 	bytesBody, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		panic(err)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 
-	json.Unmarshal(bytesBody, &user)
+	err = json.Unmarshal(bytesBody, &user)
+	if err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
+		return
+	}
 
-	userQuery := `INSERT INTO "user" (username)
-				  VALUES ($1::text);`
+	userQuery := `INSERT INTO "user" (username) VALUES ($1::text) RETURNING user_id;`
+	credentialsQuery := `INSERT INTO credentials (user_id, password) VALUES ($1, $2::text);`
 
-	credentialsQuery := `INSERT INTO credentials (password)
-						 VALUES($1::text);`
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+	if err != nil {
+		http.Error(w, "Error hashing password", http.StatusInternalServerError)
+		return
+	}
 
-	password, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
-
-	//fmt.Println(user.Username, string(password))
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		panic(err)
-	}
-
-	_, err = tx.ExecContext(ctx, userQuery, user.Username)
-	if err != nil {
-		tx.Rollback()
-		// w.Header()
-		// w.Write() smth smth user already exists
+		http.Error(w, "Error starting transaction", http.StatusInternalServerError)
 		return
 	}
 
-	_, err = tx.ExecContext(ctx, credentialsQuery, password)
+	var userID int
+
+	// QueryRowContext выполняет первый запрос и возвращает user_id
+	err = tx.QueryRowContext(ctx, userQuery, user.Username).Scan(&userID)
 	if err != nil {
 		tx.Rollback()
-		// w.Header()
-		// w.Write() smth smth user already exists
+		http.Error(w, "Error inserting user", http.StatusInternalServerError)
 		return
 	}
 
+	// ExecContext выполнет второй запрос используя user_id возвращённый первым запросом
+	_, err = tx.ExecContext(ctx, credentialsQuery, userID, string(password))
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, "Error inserting credentials", http.StatusInternalServerError)
+		return
+	}
+
+	// Комит транзакции
 	err = tx.Commit()
 	if err != nil {
-		panic(err)
+		http.Error(w, "Error committing transaction", http.StatusInternalServerError)
+		return
 	}
+
+	resp, _ := json.Marshal("Signup successful")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(resp)
 }
 
 // MEMO: return to task deletion by row problem after doing this
