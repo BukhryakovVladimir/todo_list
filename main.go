@@ -60,7 +60,7 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("jwt")
 
 	if err != nil {
-		resp, _ := json.Marshal("Not logged in")
+		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
 		w.Write(resp)
 		//defer r.Body.Close()
@@ -70,8 +70,9 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err != nil {
+			resp, _ := json.Marshal("unauthenticated")
 			w.WriteHeader(403)
-			w.Write([]byte("unauthenticated"))
+			w.Write(resp)
 			defer r.Body.Close()
 		}
 
@@ -115,7 +116,7 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("jwt")
 
 	if err != nil {
-		resp, _ := json.Marshal("Not logged in")
+		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
 		w.Write(resp)
 	} else {
@@ -188,7 +189,9 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("jwt")
 
 	if err != nil {
+		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
+		w.Write(resp)
 	} else {
 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
@@ -305,8 +308,9 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 	row := db.QueryRow(queryUsername, user.Username)
 	var userId string
 	if err := row.Scan(&userId); err != nil {
+		resp, _ := json.Marshal("Username not found")
 		w.WriteHeader(404)
-		w.Write([]byte("Username not found"))
+		w.Write(resp)
 		//panic(err) //Do not panic, write response that no user with such login was found instead
 	} else {
 		//fmt.Println(userId)
@@ -318,13 +322,15 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 		row = db.QueryRow(queryPassword, userId)
 		var password_hash string
 		if err := row.Scan(&password_hash); err != nil {
+			resp, _ := json.Marshal("Username not found")
 			w.WriteHeader(404)
-			w.Write([]byte("Username not found"))
+			w.Write(resp)
 		} else {
 			//fmt.Println(password_hash)
 			if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
+				resp, _ := json.Marshal("Incorrect password")
 				w.WriteHeader(401)
-				w.Write([]byte("Incorrect password"))
+				w.Write(resp)
 			} else {
 
 				claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
@@ -335,8 +341,9 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 				token, err := claims.SignedString([]byte(secretKey))
 
 				if err != nil {
+					resp, _ := json.Marshal("Could not login")
 					w.WriteHeader(500)
-					w.Write([]byte("Could not login"))
+					w.Write(resp)
 					defer r.Body.Close()
 				}
 
@@ -348,8 +355,9 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 				}
 
 				http.SetCookie(w, &tokenCookie)
+				resp, _ := json.Marshal("Successfully loged in")
 				w.WriteHeader(200)
-				w.Write([]byte("Successfully loged in"))
+				w.Write(resp)
 			}
 		}
 	}
@@ -371,8 +379,9 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 
 		//fmt.Println(token)
 		if err != nil {
+			resp, _ := json.Marshal("Unauthenticated")
 			w.WriteHeader(403)
-			w.Write([]byte("unauthenticated"))
+			w.Write(resp)
 			defer r.Body.Close()
 		}
 		//fmt.Println(token)
@@ -383,13 +392,16 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 		var username string
 
 		if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
+			resp, _ := json.Marshal("Username not found")
 			w.WriteHeader(403)
-			w.Write([]byte("username not found"))
+			w.Write(resp)
 			defer r.Body.Close()
+		} else {
+			resp, _ := json.Marshal(username)
+			w.WriteHeader(200)
+			w.Write(resp)
 		}
-		resp, _ := json.Marshal(username)
-		w.WriteHeader(200)
-		w.Write(resp)
+
 		//fmt.Println(username)
 		//fmt.Println(claims.Issuer)
 	}
