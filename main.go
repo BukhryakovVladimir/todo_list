@@ -57,7 +57,7 @@ func init() {
 func write_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	cookie, err := r.Cookie("jwt")
+	cookie, err := r.Cookie("buhry_ToDoList_jwt")
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
@@ -113,7 +113,7 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("jwt")
+	cookie, err := r.Cookie("buhry_ToDoList_jwt")
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
@@ -186,7 +186,7 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 func read_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("jwt")
+	cookie, err := r.Cookie("buhry_ToDoList_jwt")
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
@@ -348,7 +348,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 				}
 
 				tokenCookie := http.Cookie{
-					Name:     "jwt",
+					Name:     "buhry_ToDoList_jwt",
 					Value:    token,
 					Expires:  time.Now().Add(time.Hour * 24 * 30),
 					HttpOnly: false,
@@ -365,7 +365,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 func user_userDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	cookie, err := r.Cookie("jwt")
+	cookie, err := r.Cookie("buhry_ToDoList_jwt")
 
 	if err != nil {
 		resp, _ := json.Marshal("")
