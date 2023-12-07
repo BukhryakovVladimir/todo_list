@@ -2,24 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" 
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
     <title>To Do List</title>
-    <link rel="stylesheet" href="./style/login.css" />
+    <link rel="stylesheet" href="./style/authentication.css" />
   </head>
   <body>
     <form action="" id="loginForm">
       <input type="text" placeholder="Username" id="loginUsername" required />
+      <small id="invalidUsername">Username not found</small>
       <input
         type="password"
         placeholder="Password"
         id="loginPassword"
         required
       />
+      <small id="invalidPassword">Incorrect password</small>
       <button type="submit" id="loginSubmit">Log in</button>
     </form>
 
-    <a href="signup.html" class="linkToOther">Sign up</a>
+    <a href="signup.html" class="linkToOther">Sign up page</a>
     <a href="index.html" class="linkToOther">Main page</a>
     <script src="login.js"></script>
   </body>

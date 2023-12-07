@@ -64,93 +64,31 @@ a:active {
   background-color: #bdf886;
   color: rgb(4, 0, 255);
 }
-@media all and (max-width: 1920px) {
-  #signupUsername {
-    position: relative;
-    top: 1rem;
-    left: 12.6rem;
-  }
-  #signupPassword {
-    position: relative;
-    top: 4rem;
-    right: 6.8rem;
-  }
-  #signupSubmit {
-    position: relative;
-    height: 2rem;
-    top: 7rem;
-    right: 23em;
-  }
-  a {
-    position: relative;
-    top: 8rem;
-  }
+
+#loginForm, #signupForm {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+  margin: auto;
 }
 
-@media all and (max-width: 831px) {
-  #signupUsername {
-    position: relative;
-    top: 1rem;
-    left: 10rem;
-  }
-  #signupPassword {
-    position: relative;
-    top: 4rem;
-    right: 9.5rem;
-  }
-  #signupSubmit {
-    position: relative;
-    height: 2rem;
-    top: 5rem;
-    right: 1em;
-    width: 7em;
-  }
-  a {
-    position: relative;
-    top: 6rem;
-  }
+#loginSubmit, #signupSubmit {
+  position: relative;
+  width: 7rem;
+  align-self: flex-end;
 }
 
-@media all and (max-width: 724px) {
-  #signupUsername {
-    position: relative;
-    top: 1rem;
-    left: 0rem;
-  }
-  #signupPassword {
-    position: relative;
-    top: 2rem;
-    left: 3.2rem;
-  }
-  #signupSubmit {
-    position: relative;
-    height: 2rem;
-    top: 5rem;
-    right: 12em;
-    width: 7em;
-  }
+.linkToOther {
+  position: relative;
+  top: 2rem;
+  width: 7rem;
 }
 
-@media all and (max-width: 485px) {
-  #signupUsername {
-    position: relative;
-    top: 1rem;
-    left: 0rem;
-  }
-  #signupPassword {
-    position: relative;
-    top: 2rem;
-    left: 0rem;
-  }
-  #signupSubmit {
-    position: relative;
-    height: 2rem;
-    top: 3rem;
-    right: 1em;
-    width: 7em;
-  }
-  a {
-    position: relative;
-    top: 4rem;
-  }
+#invalidUsername, #invalidPassword {
+  visibility: hidden;
+  position: relative;
+  font-size: 1em;
+  left: 0.3rem;
+  text-align: left;
+  color: #ff6464;
 }
