@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" 
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
     <title>To Do List</title>
-    <link rel="stylesheet" href="./style/signup.css" />
-</head>
-<body>
+    <link rel="stylesheet" href="./style/authentication.css" />
+  </head>
+  <body>
     <form action="" id="signupForm">
-        <input type="text" placeholder="Username" id="signupUsername" required>
-        <input type="password" placeholder="Password" id="signupPassword" required>
-        <button type="submit" id="signupSubmit">Sign up</button>
+      <input type="text" placeholder="Username" id="signupUsername" required />
+      <small id="invalidUsername">Invalid Username placeholder</small>
+      <input type="password" placeholder="Password" id="signupPassword" required />
+      <small id="invalidPassword">Invalid Password placeholder</small>
+      <button type="submit" id="signupSubmit">Sign up</button>
     </form>
 
-    <a href="login.html">Login</a>
-    <a href="index.html">Main page</a>
+    <a href="login.html" class="linkToOther">Login page</a>
+    <a href="index.html" class="linkToOther">Main page</a>
     <script src="signup.js"></script>
-</body>
+  </body>
 </html>

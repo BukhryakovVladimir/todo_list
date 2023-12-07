@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -252,6 +253,20 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isValidUsername(user.Username) {
+		resp, _ := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
+		w.WriteHeader(400)
+		w.Write(resp)
+		return
+	}
+
+	if !isValidPassword(user.Password) {
+		resp, _ := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
+		w.WriteHeader(400)
+		w.Write(resp)
+		return
+	}
+
 	userQuery := `INSERT INTO "user" (username) VALUES ($1::text) RETURNING user_id;`
 	credentialsQuery := `INSERT INTO credentials (user_id, password) VALUES ($1, $2::text);`
 
@@ -274,7 +289,9 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 	err = tx.QueryRowContext(ctx, userQuery, user.Username).Scan(&userID)
 	if err != nil {
 		tx.Rollback()
-		http.Error(w, "Error inserting user", http.StatusInternalServerError)
+		resp, _ := json.Marshal("Username is taken")
+		w.WriteHeader(http.StatusConflict)
+		w.Write(resp)
 		return
 	}
 
@@ -456,4 +473,22 @@ func main() {
 	})
 
 	http.ListenAndServe(":3000", r)
+}
+
+// Обязательно латинские буквы, цифры и длина >= 3.
+func isValidUsername(username string) bool {
+	pattern := "^[a-zA-Z0-9]{3,}$"
+
+	regexpPattern := regexp.MustCompile(pattern)
+
+	return regexpPattern.MatchString(username)
+}
+
+// Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
+func isValidPassword(password string) bool {
+	pattern := `^[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*[a-zA-Z]+[0-9!@#$%^&*()-_=+,.?;:{}|<>]*[0-9]+[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*$`
+
+	regexpPattern := regexp.MustCompile(pattern)
+
+	return regexpPattern.MatchString(password)
 }
