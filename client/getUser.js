@@ -22,7 +22,6 @@ async function getUser() {
     if (username === "" || typeof username === "undefined") {
         login.style.display = "block";
         addForm.style.display = "none";
-        deleteForm.style.display = "none";
         show.style.display = "none";
         olist.style.display = "none";
         unauthorized.style.display = "block";
@@ -30,7 +29,6 @@ async function getUser() {
     } else {
         login.style.display = "none";
         addForm.style.display = "block";
-        deleteForm.style.display = "block";
         show.style.display = "block";
         olist.style.display = "block";
         unauthorized.style.display = "none";
