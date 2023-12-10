@@ -1,8 +1,12 @@
 * {
-  font-family: "Times New Roman", Times, serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 1.15em;
 }
-button {
+
+body {
+  background-color: rgb(147, 230, 255);
+}
+.regularButton {
   align-items: center;
   background-color: #bdf886;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -29,16 +33,16 @@ button {
   vertical-align: baseline;
   width: auto;
 }
-button:hover,
-button:focus {
+.regularButton:hover,
+.regularButton:focus {
   border-color: rgba(0, 0, 0, 0.15);
   box-shadow: rgba(0, 0, 0, 0.1) 0 4px 12px;
   color: rgba(0, 0, 0, 0.65);
 }
-button:hover {
+.regularButton:hover {
   transform: translateY(-1px);
 }
-button:active {
+.regularButton:active {
   background-color: #f0f0f1;
   border-color: rgba(0, 0, 0, 0.15);
   box-shadow: rgba(0, 0, 0, 0.06) 0 2px 4px;
@@ -46,7 +50,46 @@ button:active {
   transform: translateY(0);
 }
 
-@media all and (max-width: 1920px) {
+#checkmark,
+#wastebin,
+#crossmark {
+  top: 0.28rem;
+  position: relative;
+  left: 0.5rem;
+  overflow: hidden;
+  width: 32px; /* Set your desired button width */
+  height: 32px; /* Set your desired button height */
+  padding: 0; /* Remove default padding */
+  border-radius: 0;
+}
+
+#crossmark {
+  background-color: #ff6464;
+}
+
+#wastebin {
+  position: relative;
+  left: 0.6rem;
+  background-color: #f0f0f1;
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+span {
+  font-size: 1em;
+}
+
+.completedTask {
+  background-color: #bdf886;
+}
+
+@media all and (min-width: 1921px) {
   body {
     margin: 0;
     padding: 0;
@@ -54,23 +97,15 @@ button:active {
     flex-direction: column;
     align-items: center;
   }
-  #addForm,
-  #deleteForm {
+  #addForm {
     margin: 0 auto;
     position: relative;
   }
-  #deleteForm {
-    top: 1em;
-  }
-  #addButton,
-  #deleteButton {
+  #addButton {
     position: relative;
     bottom: 0.21em;
     width: 3.6em;
     height: 2.4em;
-  }
-  #deleteButton {
-    background-color: #ff6464;
   }
   #indexLogin {
     position: relative;
@@ -79,7 +114,8 @@ button:active {
   }
   #indexLogout {
     position: relative;
-    left: 7.6rem;
+    top: 0.5rem;
+    left: 8.2rem;
     bottom: 11rem;
     width: 7rem;
   }
@@ -102,7 +138,7 @@ button:active {
   }
   ul header {
     position: relative;
-    left: 8.6rem;
+    left: 11.5rem;
   }
   li {
     display: table-row;
@@ -110,7 +146,73 @@ button:active {
   }
   li:before {
     margin-right: 10px;
-    content: counter(li);
+    content: counter(li) ".";
+    width: 1.6em;
+    counter-increment: li;
+    display: table-cell;
+  }
+}
+
+@media all and (max-width: 1920px) {
+  body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #addForm {
+    margin: 0 auto;
+    position: relative;
+  }
+
+  #addButton {
+    position: relative;
+    bottom: 0.21em;
+    width: 3.6em;
+    height: 2.4em;
+  }
+
+  #indexLogin {
+    position: relative;
+    top: 0.1rem;
+    width: 7rem;
+  }
+  #indexLogout {
+    position: relative;
+    top: 0.5rem;
+    left: 8.2rem;
+    bottom: 11rem;
+    width: 7rem;
+  }
+  #show {
+    position: relative;
+    top: 2rem;
+    height: 2.5rem;
+    background-color: #ffffff;
+  }
+  ul {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 10px;
+    position: relative;
+    top: 2rem;
+    right: 1rem;
+    width: 30rem;
+    counter-reset: li;
+    word-wrap: break-word;
+  }
+  ul header {
+    position: relative;
+    left: 11.5rem;
+  }
+  li {
+    display: table-row;
+    padding: 2em;
+  }
+  li:before {
+    margin-right: 10px;
+    content: counter(li) ".";
     width: 1.6em;
     counter-increment: li;
     display: table-cell;
@@ -125,27 +227,18 @@ button:active {
     flex-direction: column;
     align-items: center;
   }
-  #addForm,
-  #deleteForm {
+  #addForm {
     margin: 0 auto;
     position: relative;
   }
-  #deleteForm {
-    top: 1em;
-  }
-  #addInput,
-  #deleteInput {
+  #addInput {
     width: 300px;
   }
-  #addButton,
-  #deleteButton {
+  #addButton {
     position: relative;
     bottom: 0.21em;
     width: 3.6em;
     height: 2.4em;
-  }
-  #deleteButton {
-    background-color: #ff6464;
   }
   #indexLogin {
     position: relative;
@@ -154,7 +247,8 @@ button:active {
   }
   #indexLogout {
     position: relative;
-    left: 7.6rem;
+    top: 0.5rem;
+    left: 6.6rem;
     bottom: 11rem;
     width: 7rem;
   }
@@ -184,7 +278,7 @@ button:active {
   }
   li:before {
     margin-right: 10px;
-    content: counter(li);
+    content: counter(li) ".";
     width: 1.6em;
     counter-increment: li;
     display: table-cell;

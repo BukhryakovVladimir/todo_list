@@ -34,6 +34,11 @@ type User struct {
 	Password string `json:"password"`
 }
 
+type Task struct {
+	TaskDescription string `json:"task_description"`
+	IsCompleted     bool   `json:"is_completed"`
+}
+
 // создаёт подключение к БД testdb. Выполняеся единожды
 func init() {
 	var err error
@@ -56,7 +61,6 @@ func init() {
 // записывает task_description в таблицу task
 // поменять, чтобы записывал по токену и по айдишнику
 func write_taskDB(w http.ResponseWriter, r *http.Request) {
-
 	defer r.Body.Close()
 	cookie, err := r.Cookie("buhry_ToDoList_jwt")
 
@@ -106,11 +110,9 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Write(resp)
 	}
-
-	//defer r.Body.Close()
 }
 
-// удаляет строку таблицы task по номеру строки
+// удаляет строку таблицы task по номеру строки.
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -155,32 +157,6 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Write(resp)
 	}
-
-	// if err != nil {
-
-	// }
-
-	// query := `WITH a AS (SELECT task.*, row_number() OVER () AS rnum FROM task)
-	// 		  DELETE FROM task WHERE task_description IN (SELECT task_description FROM a WHERE rnum = $1);`
-	// // if task_description is equal it deletes every task_description instead for correct row, this is unacceptable, need to fix
-	// //I can do this by adding id to task table, but the serial is not decrementing on delete, and so the id will overflow pretty soon
-	// // I am completely mentally stable
-	// bytesBody, errb := io.ReadAll(r.Body)
-
-	// if errb != nil {
-	// 	panic(errb)
-	// }
-
-	// stringBody := string(bytesBody)
-
-	// fmt.Println(stringBody, query)
-
-	// _, err := db.Exec(query, stringBody)
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 }
 
 // Возвращает строки task_descirption из таблицы task
@@ -200,21 +176,23 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
-		query := `SELECT task_description FROM task WHERE user_id = $1;`
+		query := `SELECT task_description, is_completed FROM task WHERE user_id = $1 ORDER BY task_id;`
 
 		rows, err := db.Query(query, claims.Issuer)
 		if err != nil {
 			panic(err)
 		}
 		defer rows.Close()
-		tasks := make([]string, 0)
+
+		var tasks []Task
+
 		for rows.Next() {
-			var task_description string
-			if err := rows.Scan(&task_description); err != nil {
+			var task Task
+			if err := rows.Scan(&task.TaskDescription, &task.IsCompleted); err != nil {
 				log.Fatal(err)
 			}
 
-			tasks = append(tasks, task_description)
+			tasks = append(tasks, task)
 		}
 
 		if err := rows.Err(); err != nil {
@@ -226,7 +204,101 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Err(); err != nil {
 			log.Fatal(err)
 		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(resp)
+	}
+}
 
+func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+
+	if err != nil {
+		resp, _ := json.Marshal("Unauthenticated")
+		w.WriteHeader(404)
+		w.Write(resp)
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secretKey), nil
+		})
+
+		claims := token.Claims.(*jwt.RegisteredClaims)
+
+		query := `UPDATE task
+		SET is_completed=true
+		WHERE task_id IN (
+		SELECT task_id
+		FROM (
+		SELECT task_id, user_id, row_number() OVER (PARTITION BY user_id ORDER BY task_id) AS rnum
+		FROM task
+		)
+		WHERE user_id = $1 and rnum = $2
+		)`
+
+		bytesBody, err := io.ReadAll(r.Body)
+
+		if err != nil {
+			panic(err)
+		}
+
+		stringBody := string(bytesBody)
+
+		_, err = db.Exec(query, claims.Issuer, stringBody)
+
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(claims.Issuer, stringBody)
+		resp, _ := json.Marshal("set is_completed=true successfully")
+		w.WriteHeader(200)
+		w.Write(resp)
+	}
+}
+
+func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+
+	if err != nil {
+		resp, _ := json.Marshal("Unauthenticated")
+		w.WriteHeader(404)
+		w.Write(resp)
+	} else {
+		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secretKey), nil
+		})
+
+		claims := token.Claims.(*jwt.RegisteredClaims)
+
+		query := `UPDATE task
+		SET is_completed=false
+		WHERE task_id IN (
+		SELECT task_id
+		FROM (
+		SELECT task_id, user_id, row_number() OVER (PARTITION BY user_id ORDER BY task_id) AS rnum
+		FROM task
+		)
+		WHERE user_id = $1 and rnum = $2
+		)`
+
+		bytesBody, err := io.ReadAll(r.Body)
+
+		if err != nil {
+			panic(err)
+		}
+
+		stringBody := string(bytesBody)
+
+		_, err = db.Exec(query, claims.Issuer, stringBody)
+
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(claims.Issuer, stringBody)
+		resp, _ := json.Marshal("set is_completed=true successfully")
+		w.WriteHeader(200)
 		w.Write(resp)
 	}
 }
@@ -462,9 +534,13 @@ func main() {
 
 		r.Post("/delete", delete_taskDB)
 
-		r.Post("/signup", signup_userDB)
-
 		r.Get("/read", read_taskDB)
+
+		r.Post("/setIsCompletedTrue", setIsCompletedTrue_taskDB)
+
+		r.Post("/setIsCompletedFalse", setIsCompletedFalse_taskDB)
+
+		r.Post("/signup", signup_userDB)
 
 		r.Post("/login", login_userDB)
 
