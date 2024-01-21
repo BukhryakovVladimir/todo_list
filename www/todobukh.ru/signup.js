@@ -1,3 +1,17 @@
+let config;
+let ipAddress;
+let port;
+
+fetch("./config.json")
+  .then((response) => response.json())
+  .then((data) => {
+    config = data;
+    // Use config as a regular JSON object
+    ipAddress = config.ipAddress;
+    port = config.port;
+  })
+  .catch((error) => console.error("Error fetching config.json:", error));
+
 let signupForm = document.getElementById("signupForm");
 
 signupForm.addEventListener("submit", (e) => {
@@ -6,10 +20,10 @@ signupForm.addEventListener("submit", (e) => {
   let username = document.getElementById("signupUsername").value;
   let password = document.getElementById("signupPassword").value;
 
-  let invalidUsername = document.getElementById("invalidUsername")
-  let invalidPassword = document.getElementById("invalidPassword")
+  let invalidUsername = document.getElementById("invalidUsername");
+  let invalidPassword = document.getElementById("invalidPassword");
 
-  fetch("http://localhost:3000/api/signup", {
+  fetch(`https://${ipAddress}:${port}/api/signup`, {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ username: username, password: password }),
@@ -24,7 +38,6 @@ signupForm.addEventListener("submit", (e) => {
       }
     })
     .then((responseJson) => {
-      console.log(responseJson);
       switch (responseJson.slice(0, 8)) {
         case "Username":
           invalidUsername.innerHTML = responseJson;
@@ -34,7 +47,7 @@ signupForm.addEventListener("submit", (e) => {
           invalidPassword.style.visibility = "hidden";
           break;
         case "Password":
-          invalidUsername.innerHTML = "Invalid Username placeholder";  
+          invalidUsername.innerHTML = "Invalid Username placeholder";
           invalidPassword.innerHTML = responseJson;
 
           invalidUsername.style.visibility = "hidden";

@@ -1,0 +1,85 @@
+version: '3'
+services:
+  nginx:
+    container_name: todobukh-nginx
+    build:
+      context: .
+      dockerfile: ./build/nginx/Dockerfile
+    volumes:
+      - ./var/log/nginx:/var/log/nginx
+      - ./nginx-config/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./www/todobukh.ru:/var/www/todobukh.ru
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    networks:
+      - todobukh
+    depends_on:
+      - golang
+
+  golang:
+    container_name: todobukh_golang
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000 
+    restart: on-failure
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - api:/usr/src/golang/
+      - ./ssl:/etc/golang/ssl:ro
+    depends_on:
+      - todobukh-postgres          
+    networks:
+      - todobukh
+
+
+  todobukh-postgres:
+    image: postgres:latest
+    container_name: todobukh_db_postgres
+    environment:
+      - POSTGRES_USER=${DB_USER}  
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST} 
+    ports:
+      - '5432:5432'
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+      - ./postgres-config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - todobukh
+    
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      - todobukh-postgres
+    ports:
+      - "5050:80"
+    networks:
+      - todobukh
+    restart: unless-stopped
+
+volumes:
+  api:
+  database_postgres:                  
+
+# Networks to be created to facilitate communication between containers
+networks:
+  todobukh:
+    driver: bridge
+    # ipam:
+    #   config:
+    #     - subnet: 127.0.0.0/8

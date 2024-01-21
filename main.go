@@ -7,13 +7,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 
 	"database/sql"
 
@@ -43,9 +43,21 @@ type Task struct {
 func init() {
 	var err error
 
-	psql := "postgresql://postgres:postgres@localhost:2022/testdb?sslmode=disable"
-
+	// psql := "postgresql://postgres:postgres@todobukh-postgres:5432/todobukh?sslmode=disable"
+	// psql := "postgres:postgres@tcp(todobukh-postgres:5432)/todobukh?charset=utf8&parseTime=True&loc=Local"
+	// server.Initialize(os.Getenv("DB_DRIVER"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_PORT"), os.Getenv("DB_HOST"), os.Getenv("DB_NAME"))
+	DbHost := os.Getenv("DB_HOST")
+	DbPort := os.Getenv("DB_PORT")
+	DbUser := os.Getenv("DB_USER")
+	DbName := os.Getenv("DB_NAME")
+	DbPassword := os.Getenv("DB_PASSWORD")
+	psql := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
 	db, err = sql.Open("postgres", psql)
+	fmt.Printf("DB_HOST: %s\n", DbHost)
+	fmt.Printf("DB_PORT: %s\n", DbPort)
+	fmt.Printf("DB_USER: %s\n", DbUser)
+	fmt.Printf("DB_NAME: %s\n", DbName)
+	fmt.Printf("DB_PASSWORD: %s\n", DbPassword)
 
 	if err != nil {
 		panic(err)
@@ -127,6 +139,12 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 			return []byte(secretKey), nil
 		})
 
+		if err != nil {
+			resp, _ := json.Marshal("Error while parsing jwt")
+			w.WriteHeader(404)
+			w.Write(resp)
+		}
+
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
 		query := `DELETE FROM task
@@ -152,7 +170,7 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(claims.Issuer, stringBody)
+		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("delete successfully")
 		w.WriteHeader(200)
 		w.Write(resp)
@@ -173,6 +191,12 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		})
+
+		if err != nil {
+			resp, _ := json.Marshal("Error while parsing jwt")
+			w.WriteHeader(404)
+			w.Write(resp)
+		}
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
@@ -199,7 +223,7 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		resp, err := json.Marshal(tasks)
+		resp, _ := json.Marshal(tasks)
 
 		if err := rows.Err(); err != nil {
 			log.Fatal(err)
@@ -222,6 +246,12 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		})
+
+		if err != nil {
+			resp, _ := json.Marshal("Error while parsing jwt")
+			w.WriteHeader(404)
+			w.Write(resp)
+		}
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
@@ -249,7 +279,7 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(claims.Issuer, stringBody)
+		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed=true successfully")
 		w.WriteHeader(200)
 		w.Write(resp)
@@ -269,6 +299,12 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		})
+
+		if err != nil {
+			resp, _ := json.Marshal("Error while parsing jwt")
+			w.WriteHeader(404)
+			w.Write(resp)
+		}
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
 
@@ -296,7 +332,7 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(claims.Issuer, stringBody)
+		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed=true successfully")
 		w.WriteHeader(200)
 		w.Write(resp)
@@ -516,16 +552,22 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 func main() {
 	r := chi.NewRouter()
 
-	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*", "http://localhost"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		// /MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			w.Header().Set("Access-Control-Allow-Origin", "https://localhost")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	//Go-chi маршрутизатор
 	r.Route("/api", func(r chi.Router) {
@@ -548,7 +590,17 @@ func main() {
 
 	})
 
-	http.ListenAndServe(":3000", r)
+	certFile := "/etc/golang/ssl/localhost.crt"
+	keyFile := "/etc/golang/ssl/localhost.key"
+
+	// Use ListenAndServeTLS to start the HTTPS server
+	err := http.ListenAndServeTLS(":3000", certFile, keyFile, r)
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+
+	// http.ListenAndServe(":3000", r)
 }
 
 // Обязательно латинские буквы, цифры и длина >= 3.
