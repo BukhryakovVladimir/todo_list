@@ -24,6 +24,7 @@ import (
 
 // move to separate file
 const secretKey = "chechevitsa"
+const jwtName = "buhry_ToDoList_jwt"
 
 // База данных
 var db *sql.DB
@@ -74,7 +75,7 @@ func init() {
 // поменять, чтобы записывал по токену и по айдишнику
 func write_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
@@ -82,9 +83,7 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 		w.Write(resp)
 		//defer r.Body.Close()
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("unauthenticated")
@@ -128,16 +127,14 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
@@ -181,16 +178,14 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 func read_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
@@ -236,16 +231,14 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
@@ -289,16 +282,14 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
 		w.WriteHeader(404)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
@@ -489,7 +480,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 				}
 
 				tokenCookie := http.Cookie{
-					Name:     "buhry_ToDoList_jwt",
+					Name:     jwtName,
 					Value:    token,
 					Expires:  time.Now().Add(time.Hour * 24 * 30),
 					HttpOnly: false,
@@ -506,7 +497,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 func user_userDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("")
@@ -514,9 +505,7 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 		w.Write(resp)
 		defer r.Body.Close()
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		//fmt.Println(token)
 		if err != nil {
@@ -547,6 +536,33 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println(claims.Issuer)
 	}
 
+}
+
+// jwtCheck парсит JWT токен из переданного HTTP cookie используя секретный ключ secretKey
+func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
+	token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+
+	return token, err
+}
+
+// Обязательно латинские буквы, цифры и длина >= 3.
+func isValidUsername(username string) bool {
+	pattern := "^[a-zA-Z0-9]{3,}$"
+
+	regexpPattern := regexp.MustCompile(pattern)
+
+	return regexpPattern.MatchString(username)
+}
+
+// Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
+func isValidPassword(password string) bool {
+	pattern := `^[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*[a-zA-Z]+[0-9!@#$%^&*()-_=+,.?;:{}|<>]*[0-9]+[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*$`
+
+	regexpPattern := regexp.MustCompile(pattern)
+
+	return regexpPattern.MatchString(password)
 }
 
 func main() {
@@ -601,22 +617,4 @@ func main() {
 	}
 
 	// http.ListenAndServe(":3000", r)
-}
-
-// Обязательно латинские буквы, цифры и длина >= 3.
-func isValidUsername(username string) bool {
-	pattern := "^[a-zA-Z0-9]{3,}$"
-
-	regexpPattern := regexp.MustCompile(pattern)
-
-	return regexpPattern.MatchString(username)
-}
-
-// Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
-func isValidPassword(password string) bool {
-	pattern := `^[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*[a-zA-Z]+[0-9!@#$%^&*()-_=+,.?;:{}|<>]*[0-9]+[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*$`
-
-	regexpPattern := regexp.MustCompile(pattern)
-
-	return regexpPattern.MatchString(password)
 }
