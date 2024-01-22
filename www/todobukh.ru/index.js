@@ -110,7 +110,7 @@ function getList() {
 
 function setIsCompletedTrue(rowNum) {
   fetch(`https://${ipAddress}:${port}/api/setIsCompletedTrue`, {
-    method: "POST",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
@@ -123,7 +123,7 @@ function setIsCompletedTrue(rowNum) {
 
 function setIsCompletedFalse(rowNum) {
   fetch(`https://${ipAddress}:${port}/api/setIsCompletedFalse`, {
-    method: "POST",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
@@ -136,7 +136,7 @@ function setIsCompletedFalse(rowNum) {
 
 function deleteTask(rowNum) {
   fetch(`https://${ipAddress}:${port}/api/delete`, {
-    method: "POST",
+    method: "DELETE",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,

@@ -129,6 +129,12 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 
 // удаляет строку таблицы task по номеру строки.
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили DELETE request
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Invalid HTTP method. Use DELETE.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
 	cookie, err := r.Cookie(jwtName)
@@ -173,7 +179,7 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("delete successfully")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 		w.Write(resp)
 	}
 }
@@ -233,6 +239,12 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 }
 
 func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили PUT request
+	if r.Method != http.MethodPut {
+		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
 	cookie, err := r.Cookie(jwtName)
@@ -277,13 +289,19 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 		// fmt.Println(claims.Issuer, stringBody)
-		resp, _ := json.Marshal("set is_completed=true successfully")
+		resp, _ := json.Marshal("set is_completed = true successfully")
 		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
 
 func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили PUT request
+	if r.Method != http.MethodPut {
+		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
 	cookie, err := r.Cookie(jwtName)
@@ -594,13 +612,13 @@ func main() {
 
 		r.Post("/write", write_taskDB)
 
-		r.Post("/delete", delete_taskDB)
+		r.Delete("/delete", delete_taskDB)
 
 		r.Get("/read", read_taskDB)
 
-		r.Post("/setIsCompletedTrue", setIsCompletedTrue_taskDB)
+		r.Put("/setIsCompletedTrue", setIsCompletedTrue_taskDB)
 
-		r.Post("/setIsCompletedFalse", setIsCompletedFalse_taskDB)
+		r.Put("/setIsCompletedFalse", setIsCompletedFalse_taskDB)
 
 		r.Post("/signup", signup_userDB)
 
