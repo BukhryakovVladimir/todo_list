@@ -23,8 +23,8 @@ import (
 )
 
 // move to separate file
-const secretKey = "chechevitsa"
-const jwtName = "buhry_ToDoList_jwt"
+var secretKey string
+var jwtName string
 
 // База данных
 var db *sql.DB
@@ -42,6 +42,8 @@ type Task struct {
 
 // создаёт подключение к БД testdb. Выполняеся единожды
 func init() {
+	secretKey = os.Getenv("SECRET_KEY")
+	jwtName = os.Getenv("JWT_NAME")
 	var err error
 
 	// psql := "postgresql://postgres:postgres@todobukh-postgres:5432/todobukh?sslmode=disable"
@@ -59,6 +61,8 @@ func init() {
 	fmt.Printf("DB_USER: %s\n", DbUser)
 	fmt.Printf("DB_NAME: %s\n", DbName)
 	fmt.Printf("DB_PASSWORD: %s\n", DbPassword)
+	fmt.Printf("SECRET_KEY: %s\n", secretKey)
+	fmt.Printf("JWT_NAME: %s\n", jwtName)
 
 	if err != nil {
 		panic(err)
