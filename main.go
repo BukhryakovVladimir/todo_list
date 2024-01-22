@@ -83,15 +83,15 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		//defer r.Body.Close()
 	} else {
 		token, err := jwtCheck(cookie)
 
 		if err != nil {
-			resp, _ := json.Marshal("unauthenticated")
-			w.WriteHeader(403)
+			resp, _ := json.Marshal("Unauthenticated")
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 			defer r.Body.Close()
 		}
@@ -122,7 +122,7 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 		// 	defer r.Body.Close()
 		// }
 		resp, _ := json.Marshal("Write successful")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	}
 }
@@ -135,14 +135,14 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
 		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -173,7 +173,7 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("delete successfully")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
@@ -186,14 +186,14 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
 		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -239,14 +239,14 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
 		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -278,7 +278,7 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed=true successfully")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
@@ -290,14 +290,14 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
 		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -329,7 +329,7 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed=true successfully")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
@@ -358,14 +358,14 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 
 	if !isValidUsername(user.Username) {
 		resp, _ := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
 	}
 
 	if !isValidPassword(user.Password) {
 		resp, _ := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
 	}
@@ -445,7 +445,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 	var userId string
 	if err := row.Scan(&userId); err != nil {
 		resp, _ := json.Marshal("Username not found")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		//panic(err) //Do not panic, write response that no user with such login was found instead
 	} else {
@@ -459,13 +459,13 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 		var password_hash string
 		if err := row.Scan(&password_hash); err != nil {
 			resp, _ := json.Marshal("Username not found")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write(resp)
 		} else {
 			//fmt.Println(password_hash)
 			if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
 				resp, _ := json.Marshal("Incorrect password")
-				w.WriteHeader(401)
+				w.WriteHeader(http.StatusUnauthorized)
 				w.Write(resp)
 			} else {
 
@@ -478,7 +478,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 				if err != nil {
 					resp, _ := json.Marshal("Could not login")
-					w.WriteHeader(500)
+					w.WriteHeader(http.StatusUnauthorized)
 					w.Write(resp)
 					defer r.Body.Close()
 				}
@@ -492,7 +492,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 				http.SetCookie(w, &tokenCookie)
 				resp, _ := json.Marshal("Successfully loged in")
-				w.WriteHeader(200)
+				w.WriteHeader(http.StatusOK)
 				w.Write(resp)
 			}
 		}
@@ -505,7 +505,7 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp, _ := json.Marshal("")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		defer r.Body.Close()
 	} else {
@@ -514,7 +514,7 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println(token)
 		if err != nil {
 			resp, _ := json.Marshal("Unauthenticated")
-			w.WriteHeader(403)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 			defer r.Body.Close()
 		}
@@ -527,12 +527,12 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 
 		if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
 			resp, _ := json.Marshal("Username not found")
-			w.WriteHeader(403)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 			defer r.Body.Close()
 		} else {
 			resp, _ := json.Marshal(username)
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 			w.Write(resp)
 		}
 
