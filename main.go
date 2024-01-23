@@ -581,12 +581,14 @@ func isValidPassword(password string) bool {
 }
 
 func main() {
+	corsOrigin := fmt.Sprintf("https://%s", os.Getenv("CORS_ORIGIN"))
+
 	r := chi.NewRouter()
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			w.Header().Set("Access-Control-Allow-Origin", "https://localhost")
+			w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
