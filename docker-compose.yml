@@ -33,6 +33,8 @@ services:
       - DB_USER=${DB_USER}
       - DB_NAME=${DB_NAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_NAME=${JWT_NAME}
     volumes:
       - api:/usr/src/golang/
       - ./ssl:/etc/golang/ssl:ro

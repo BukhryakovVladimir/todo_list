@@ -23,7 +23,8 @@ import (
 )
 
 // move to separate file
-const secretKey = "chechevitsa"
+var secretKey string
+var jwtName string
 
 // База данных
 var db *sql.DB
@@ -41,6 +42,8 @@ type Task struct {
 
 // создаёт подключение к БД testdb. Выполняеся единожды
 func init() {
+	secretKey = os.Getenv("SECRET_KEY")
+	jwtName = os.Getenv("JWT_NAME")
 	var err error
 
 	// psql := "postgresql://postgres:postgres@todobukh-postgres:5432/todobukh?sslmode=disable"
@@ -58,6 +61,8 @@ func init() {
 	fmt.Printf("DB_USER: %s\n", DbUser)
 	fmt.Printf("DB_NAME: %s\n", DbName)
 	fmt.Printf("DB_PASSWORD: %s\n", DbPassword)
+	fmt.Printf("SECRET_KEY: %s\n", secretKey)
+	fmt.Printf("JWT_NAME: %s\n", jwtName)
 
 	if err != nil {
 		panic(err)
@@ -74,21 +79,19 @@ func init() {
 // поменять, чтобы записывал по токену и по айдишнику
 func write_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		//defer r.Body.Close()
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
-			resp, _ := json.Marshal("unauthenticated")
-			w.WriteHeader(403)
+			resp, _ := json.Marshal("Unauthenticated")
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 			defer r.Body.Close()
 		}
@@ -119,29 +122,33 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 		// 	defer r.Body.Close()
 		// }
 		resp, _ := json.Marshal("Write successful")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	}
 }
 
 // удаляет строку таблицы task по номеру строки.
 func delete_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили DELETE request
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Invalid HTTP method. Use DELETE.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -172,7 +179,7 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("delete successfully")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusNoContent)
 		w.Write(resp)
 	}
 }
@@ -181,20 +188,18 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 func read_taskDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -234,22 +239,26 @@ func read_taskDB(w http.ResponseWriter, r *http.Request) {
 }
 
 func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили PUT request
+	if r.Method != http.MethodPut {
+		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -280,29 +289,33 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 		// fmt.Println(claims.Issuer, stringBody)
-		resp, _ := json.Marshal("set is_completed=true successfully")
-		w.WriteHeader(200)
+		resp, _ := json.Marshal("set is_completed = true successfully")
+		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
 
 func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили PUT request
+	if r.Method != http.MethodPut {
+		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("Unauthenticated")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		if err != nil {
 			resp, _ := json.Marshal("Error while parsing jwt")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 		}
 
@@ -334,7 +347,7 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed=true successfully")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
@@ -363,14 +376,14 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 
 	if !isValidUsername(user.Username) {
 		resp, _ := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
 	}
 
 	if !isValidPassword(user.Password) {
 		resp, _ := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
 	}
@@ -450,7 +463,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 	var userId string
 	if err := row.Scan(&userId); err != nil {
 		resp, _ := json.Marshal("Username not found")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		//panic(err) //Do not panic, write response that no user with such login was found instead
 	} else {
@@ -464,13 +477,13 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 		var password_hash string
 		if err := row.Scan(&password_hash); err != nil {
 			resp, _ := json.Marshal("Username not found")
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write(resp)
 		} else {
 			//fmt.Println(password_hash)
 			if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
 				resp, _ := json.Marshal("Incorrect password")
-				w.WriteHeader(401)
+				w.WriteHeader(http.StatusUnauthorized)
 				w.Write(resp)
 			} else {
 
@@ -483,13 +496,13 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 				if err != nil {
 					resp, _ := json.Marshal("Could not login")
-					w.WriteHeader(500)
+					w.WriteHeader(http.StatusUnauthorized)
 					w.Write(resp)
 					defer r.Body.Close()
 				}
 
 				tokenCookie := http.Cookie{
-					Name:     "buhry_ToDoList_jwt",
+					Name:     jwtName,
 					Value:    token,
 					Expires:  time.Now().Add(time.Hour * 24 * 30),
 					HttpOnly: false,
@@ -497,7 +510,7 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 				http.SetCookie(w, &tokenCookie)
 				resp, _ := json.Marshal("Successfully loged in")
-				w.WriteHeader(200)
+				w.WriteHeader(http.StatusOK)
 				w.Write(resp)
 			}
 		}
@@ -506,22 +519,20 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 
 func user_userDB(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	cookie, err := r.Cookie("buhry_ToDoList_jwt")
+	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
 		resp, _ := json.Marshal("")
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		defer r.Body.Close()
 	} else {
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secretKey), nil
-		})
+		token, err := jwtCheck(cookie)
 
 		//fmt.Println(token)
 		if err != nil {
 			resp, _ := json.Marshal("Unauthenticated")
-			w.WriteHeader(403)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 			defer r.Body.Close()
 		}
@@ -534,12 +545,12 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 
 		if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
 			resp, _ := json.Marshal("Username not found")
-			w.WriteHeader(403)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
 			defer r.Body.Close()
 		} else {
 			resp, _ := json.Marshal(username)
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 			w.Write(resp)
 		}
 
@@ -547,6 +558,33 @@ func user_userDB(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println(claims.Issuer)
 	}
 
+}
+
+// jwtCheck парсит JWT токен из переданного HTTP cookie используя секретный ключ secretKey
+func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
+	token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+
+	return token, err
+}
+
+// Обязательно латинские буквы, цифры и длина >= 3.
+func isValidUsername(username string) bool {
+	pattern := "^[a-zA-Z0-9]{3,}$"
+
+	regexpPattern := regexp.MustCompile(pattern)
+
+	return regexpPattern.MatchString(username)
+}
+
+// Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
+func isValidPassword(password string) bool {
+	pattern := `^[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*[a-zA-Z]+[0-9!@#$%^&*()-_=+,.?;:{}|<>]*[0-9]+[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*$`
+
+	regexpPattern := regexp.MustCompile(pattern)
+
+	return regexpPattern.MatchString(password)
 }
 
 func main() {
@@ -574,13 +612,13 @@ func main() {
 
 		r.Post("/write", write_taskDB)
 
-		r.Post("/delete", delete_taskDB)
+		r.Delete("/delete", delete_taskDB)
 
 		r.Get("/read", read_taskDB)
 
-		r.Post("/setIsCompletedTrue", setIsCompletedTrue_taskDB)
+		r.Put("/setIsCompletedTrue", setIsCompletedTrue_taskDB)
 
-		r.Post("/setIsCompletedFalse", setIsCompletedFalse_taskDB)
+		r.Put("/setIsCompletedFalse", setIsCompletedFalse_taskDB)
 
 		r.Post("/signup", signup_userDB)
 
@@ -601,22 +639,4 @@ func main() {
 	}
 
 	// http.ListenAndServe(":3000", r)
-}
-
-// Обязательно латинские буквы, цифры и длина >= 3.
-func isValidUsername(username string) bool {
-	pattern := "^[a-zA-Z0-9]{3,}$"
-
-	regexpPattern := regexp.MustCompile(pattern)
-
-	return regexpPattern.MatchString(username)
-}
-
-// Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
-func isValidPassword(password string) bool {
-	pattern := `^[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*[a-zA-Z]+[0-9!@#$%^&*()-_=+,.?;:{}|<>]*[0-9]+[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*$`
-
-	regexpPattern := regexp.MustCompile(pattern)
-
-	return regexpPattern.MatchString(password)
 }
