@@ -56,13 +56,6 @@ func init() {
 	DbPassword := os.Getenv("DB_PASSWORD")
 	psql := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
 	db, err = sql.Open("postgres", psql)
-	fmt.Printf("DB_HOST: %s\n", DbHost)
-	fmt.Printf("DB_PORT: %s\n", DbPort)
-	fmt.Printf("DB_USER: %s\n", DbUser)
-	fmt.Printf("DB_NAME: %s\n", DbName)
-	fmt.Printf("DB_PASSWORD: %s\n", DbPassword)
-	fmt.Printf("SECRET_KEY: %s\n", secretKey)
-	fmt.Printf("JWT_NAME: %s\n", jwtName)
 
 	if err != nil {
 		panic(err)
