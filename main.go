@@ -22,12 +22,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// move to separate file
-var secretKey string
-var jwtName string
+const (
+	queryTimeLimit  int = 5
+	MaxOpenConns    int = 10
+	MaxIdleConns    int = 5
+	ConnMaxLifetime int = 30
+)
 
-// База данных
-var db *sql.DB
+var (
+	secretKey string
+	jwtName   string
+	db        *sql.DB // Пул соединений с БД
+)
 
 // Структура пользователя
 type User struct {
@@ -46,20 +52,24 @@ func init() {
 	jwtName = os.Getenv("JWT_NAME")
 	var err error
 
-	// psql := "postgresql://postgres:postgres@todobukh-postgres:5432/todobukh?sslmode=disable"
-	// psql := "postgres:postgres@tcp(todobukh-postgres:5432)/todobukh?charset=utf8&parseTime=True&loc=Local"
-	// server.Initialize(os.Getenv("DB_DRIVER"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_PORT"), os.Getenv("DB_HOST"), os.Getenv("DB_NAME"))
 	DbHost := os.Getenv("DB_HOST")
 	DbPort := os.Getenv("DB_PORT")
 	DbUser := os.Getenv("DB_USER")
 	DbName := os.Getenv("DB_NAME")
 	DbPassword := os.Getenv("DB_PASSWORD")
+
 	psql := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
 	db, err = sql.Open("postgres", psql)
 
 	if err != nil {
 		panic(err)
 	}
+
+	db.SetMaxOpenConns(10)
+
+	db.SetMaxIdleConns(5)
+
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	if err = db.Ping(); err != nil {
 		panic(err)
@@ -86,7 +96,7 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 			resp, _ := json.Marshal("Unauthenticated")
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(resp)
-			defer r.Body.Close()
+			defer r.Body.Close() // replace with return, 1 defer at the top of function is enough
 		}
 
 		claims := token.Claims.(*jwt.RegisteredClaims)
@@ -101,10 +111,21 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 
 		stringBody := string(bytesBody)
 
-		_, err = db.Exec(query, claims.Issuer, stringBody)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+		defer cancel()
+
+		_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 		if err != nil {
-			panic(err)
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Println("Database query time limit exceeded: ", err)
+				http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+				return
+			} else {
+				log.Println("Database query error: ", err)
+				http.Error(w, "Database query error", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		// var username string
@@ -165,11 +186,23 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 
 		stringBody := string(bytesBody)
 
-		_, err = db.Exec(query, claims.Issuer, stringBody)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+		defer cancel()
+
+		_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 		if err != nil {
-			panic(err)
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Println("Database query time limit exceeded: ", err)
+				http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+				return
+			} else {
+				log.Println("Database query error: ", err)
+				http.Error(w, "Database query error", http.StatusInternalServerError)
+				return
+			}
 		}
+
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("delete successfully")
 		w.WriteHeader(http.StatusNoContent)
@@ -276,11 +309,23 @@ func setIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 
 		stringBody := string(bytesBody)
 
-		_, err = db.Exec(query, claims.Issuer, stringBody)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+		defer cancel()
+
+		_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 		if err != nil {
-			panic(err)
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Println("Database query time limit exceeded: ", err)
+				http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+				return
+			} else {
+				log.Println("Database query error: ", err)
+				http.Error(w, "Database query error", http.StatusInternalServerError)
+				return
+			}
 		}
+
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed = true successfully")
 		w.WriteHeader(http.StatusOK)
@@ -333,11 +378,23 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 
 		stringBody := string(bytesBody)
 
-		_, err = db.Exec(query, claims.Issuer, stringBody)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+		defer cancel()
+
+		_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 		if err != nil {
-			panic(err)
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Println("Database query time limit exceeded: ", err)
+				http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+				return
+			} else {
+				log.Println("Database query error: ", err)
+				http.Error(w, "Database query error", http.StatusInternalServerError)
+				return
+			}
 		}
+
 		// fmt.Println(claims.Issuer, stringBody)
 		resp, _ := json.Marshal("set is_completed=true successfully")
 		w.WriteHeader(http.StatusOK)
@@ -390,7 +447,9 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+	defer cancel()
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		http.Error(w, "Error starting transaction", http.StatusInternalServerError)
@@ -402,26 +461,42 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// QueryRowContext выполняет первый запрос и возвращает user_id
 	err = tx.QueryRowContext(ctx, userQuery, user.Username).Scan(&userID)
 	if err != nil {
-		tx.Rollback()
-		resp, _ := json.Marshal("Username is taken")
-		w.WriteHeader(http.StatusConflict)
-		w.Write(resp)
-		return
+		if ctx.Err() == context.DeadlineExceeded {
+			tx.Rollback()
+			log.Println("signup_userDB QueryRowContext deadline exceeded: ", err)
+			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+		} else {
+			tx.Rollback()
+			http.Error(w, "Username is taken", http.StatusConflict)
+			return
+		}
 	}
 
 	// ExecContext выполнет второй запрос используя user_id возвращённый первым запросом
 	_, err = tx.ExecContext(ctx, credentialsQuery, userID, string(password))
 	if err != nil {
-		tx.Rollback()
-		http.Error(w, "Error inserting credentials", http.StatusInternalServerError)
-		return
+		if ctx.Err() == context.DeadlineExceeded {
+			tx.Rollback()
+			log.Println("signup_userDB ExecContext deadline exceeded: ", err)
+			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+		} else {
+			tx.Rollback()
+			http.Error(w, "Error inserting credentials", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Комит транзакции
 	err = tx.Commit()
 	if err != nil {
-		http.Error(w, "Error committing transaction", http.StatusInternalServerError)
-		return
+		if ctx.Err() == context.DeadlineExceeded {
+			tx.Rollback()
+			log.Println("signup_userDB Commit deadline exceeded: ", err)
+			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+		} else {
+			http.Error(w, "Error committing transaction", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	resp, _ := json.Marshal("Signup successful")
