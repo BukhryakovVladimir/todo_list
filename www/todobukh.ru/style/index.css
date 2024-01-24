@@ -101,7 +101,17 @@ span {
     margin: 0 auto;
     position: relative;
   }
+  #updateForm {
+    margin: 0 auto;
+    position: relative;
+  }
   #addButton {
+    position: relative;
+    bottom: 0.21em;
+    width: 3.6em;
+    height: 2.4em;
+  }
+  #updateButton {
     position: relative;
     bottom: 0.21em;
     width: 3.6em;
@@ -166,8 +176,33 @@ span {
     position: relative;
   }
 
+  #updateForm {
+    margin: 0 auto;
+    position: relative;
+  }
+  #addInput {
+    /* width: 300px; */
+  }
+  #updateInputNumber {
+    position: relative;
+    right: 2em;
+    width: 100px;
+  }
+  #updateInputTask {
+    position: relative;
+    right: 2.05em;
+    /* width: 300px; */
+  }
   #addButton {
     position: relative;
+    bottom: 0.21em;
+    width: 3.6em;
+    height: 2.4em;
+  }
+
+  #updateButton {
+    position: relative;
+    right: 3.56em;
     bottom: 0.21em;
     width: 3.6em;
     height: 2.4em;
@@ -231,10 +266,26 @@ span {
     margin: 0 auto;
     position: relative;
   }
+  #updateForm {
+    margin: 0 auto;
+    position: relative;
+  }
   #addInput {
     width: 300px;
   }
+  #updateInputNumber {
+    width: 100px;
+  }
+  #updateInputTask {
+    width: 300px;
+  }
   #addButton {
+    position: relative;
+    bottom: 0.21em;
+    width: 3.6em;
+    height: 2.4em;
+  }
+  #updateButton {
     position: relative;
     bottom: 0.21em;
     width: 3.6em;

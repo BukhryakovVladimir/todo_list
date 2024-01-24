@@ -46,6 +46,11 @@ type Task struct {
 	IsCompleted     bool   `json:"is_completed"`
 }
 
+type updateTask struct {
+	TaskNumber      string `json:"task_number"`
+	TaskDescription string `json:"task_description"`
+}
+
 // создаёт подключение к БД testdb. Выполняеся единожды
 func init() {
 	secretKey = os.Getenv("SECRET_KEY")
@@ -81,6 +86,12 @@ func init() {
 // записывает task_description в таблицу task
 // поменять, чтобы записывал по токену и по айдишнику
 func write_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили POST request
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 	cookie, err := r.Cookie(jwtName)
 
@@ -137,6 +148,78 @@ func write_taskDB(w http.ResponseWriter, r *http.Request) {
 		// }
 		resp, _ := json.Marshal("Write successful")
 		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
+	}
+}
+
+// Поменять, пока исполняет функции write_taskDB !!!!!!!!!!!!!!!!!!!!!!!!!!!
+func update_taskDB(w http.ResponseWriter, r *http.Request) {
+
+	// Используем r.Method чтобы удостовериться что получили PUT request
+	if r.Method != http.MethodPut {
+		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
+		return
+	}
+
+	defer r.Body.Close()
+	var updateTask updateTask
+
+	bytesBody, err := io.ReadAll(r.Body)
+
+	json.Unmarshal(bytesBody, &updateTask)
+
+	if err != nil {
+		panic(err)
+	}
+
+	cookie, err := r.Cookie(jwtName)
+
+	if err != nil {
+		resp, _ := json.Marshal("Unauthenticated")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(resp)
+	} else {
+		token, err := jwtCheck(cookie)
+
+		if err != nil {
+			resp, _ := json.Marshal("Error while parsing jwt")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(resp)
+		}
+
+		claims := token.Claims.(*jwt.RegisteredClaims)
+
+		query := `UPDATE task
+		SET task_description=$1
+		WHERE task_id IN (
+		SELECT task_id
+		FROM (
+		SELECT task_id, user_id, row_number() OVER (PARTITION BY user_id ORDER BY task_id) AS rnum
+		FROM task
+		)
+		WHERE user_id = $2 and rnum = $3
+		)`
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+		defer cancel()
+
+		_, err = db.ExecContext(ctx, query, updateTask.TaskDescription, claims.Issuer, updateTask.TaskNumber)
+
+		if err != nil {
+			if ctx.Err() == context.DeadlineExceeded {
+				log.Println("Database query time limit exceeded: ", err)
+				http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+				return
+			} else {
+				log.Println("Database query error: ", err)
+				http.Error(w, "Database query error", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// fmt.Println(claims.Issuer, stringBody)
+		resp, _ := json.Marshal("Task changed successfully")
+		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
 }
@@ -212,6 +295,12 @@ func delete_taskDB(w http.ResponseWriter, r *http.Request) {
 
 // Возвращает строки task_descirption из таблицы task
 func read_taskDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили GET request
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid HTTP method. Use GET.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 
 	cookie, err := r.Cookie(jwtName)
@@ -406,6 +495,11 @@ func setIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 // Обе операции должны выполнится, поэтому находятся в одной транзакции
 // Отношение таблиц	 1 to 1
 func signup_userDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили POST request
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
+		return
+	}
 
 	defer r.Body.Close()
 
@@ -508,6 +602,12 @@ func signup_userDB(w http.ResponseWriter, r *http.Request) {
 
 // MEMO: return to task deletion by row problem after doing this
 func login_userDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили POST request
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 	var user User
 
@@ -586,6 +686,12 @@ func login_userDB(w http.ResponseWriter, r *http.Request) {
 }
 
 func user_userDB(w http.ResponseWriter, r *http.Request) {
+	// Используем r.Method чтобы удостовериться что получили GET request
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid HTTP method. Use GET.", http.StatusMethodNotAllowed)
+		return
+	}
+
 	defer r.Body.Close()
 	cookie, err := r.Cookie(jwtName)
 
@@ -681,6 +787,8 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 
 		r.Post("/write", write_taskDB)
+
+		r.Put("/update", update_taskDB)
 
 		r.Delete("/delete", delete_taskDB)
 
