@@ -22,14 +22,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const queryTimeLimit int = 5
+const (
+	queryTimeLimit  int = 5
+	MaxOpenConns    int = 10
+	MaxIdleConns    int = 5
+	ConnMaxLifetime int = 30
+)
 
-// move to separate file
-var secretKey string
-var jwtName string
-
-// База данных
-var db *sql.DB
+var (
+	secretKey string
+	jwtName   string
+	db        *sql.DB // Пул соединений с БД
+)
 
 // Структура пользователя
 type User struct {
@@ -48,20 +52,24 @@ func init() {
 	jwtName = os.Getenv("JWT_NAME")
 	var err error
 
-	// psql := "postgresql://postgres:postgres@todobukh-postgres:5432/todobukh?sslmode=disable"
-	// psql := "postgres:postgres@tcp(todobukh-postgres:5432)/todobukh?charset=utf8&parseTime=True&loc=Local"
-	// server.Initialize(os.Getenv("DB_DRIVER"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_PORT"), os.Getenv("DB_HOST"), os.Getenv("DB_NAME"))
 	DbHost := os.Getenv("DB_HOST")
 	DbPort := os.Getenv("DB_PORT")
 	DbUser := os.Getenv("DB_USER")
 	DbName := os.Getenv("DB_NAME")
 	DbPassword := os.Getenv("DB_PASSWORD")
+
 	psql := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
 	db, err = sql.Open("postgres", psql)
 
 	if err != nil {
 		panic(err)
 	}
+
+	db.SetMaxOpenConns(10)
+
+	db.SetMaxIdleConns(5)
+
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	if err = db.Ping(); err != nil {
 		panic(err)
