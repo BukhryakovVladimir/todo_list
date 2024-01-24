@@ -9,12 +9,12 @@ fetch("./config.json")
     // Use config as a regular JSON object
     ipAddress = config.ipAddress;
     port = config.port;
-  })
+
+    
+  }).then(window.onload = () => { getList();})
   .catch((error) => console.error("Error fetching config.json:", error));
 
-window.onload = () => {
-  getList();
-};
+
 
 let addForm = document.getElementById("addForm");
 // add button to delete element from to-do list by it's respectful number
@@ -33,7 +33,28 @@ addForm.addEventListener("submit", (e) => {
 
   setTimeout(() => {
     getList();
-  }, 200);
+  }, 500);
+});
+
+let updateForm = document.getElementById("updateForm");
+// add button to delete element from to-do list by it's respectful number
+updateForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  let updateInputNumber = document.getElementById("updateInputNumber").value;
+  let updateInputTask = document.getElementById("updateInputTask").value;
+
+  fetch(`https://${ipAddress}:${port}/api/update`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    //mode: "no-cors", //probably can delete that
+    body: JSON.stringify({task_number: updateInputNumber, task_description: updateInputTask}),
+  });
+
+  setTimeout(() => {
+    getList();
+  }, 500);
 });
 
 let button = document.getElementById("show");
@@ -118,7 +139,7 @@ function setIsCompletedTrue(rowNum) {
 
   setTimeout(() => {
     getList();
-  }, 200);
+  }, 500);
 }
 
 function setIsCompletedFalse(rowNum) {
@@ -131,7 +152,7 @@ function setIsCompletedFalse(rowNum) {
 
   setTimeout(() => {
     getList();
-  }, 200);
+  }, 500);
 }
 
 function deleteTask(rowNum) {
@@ -144,5 +165,5 @@ function deleteTask(rowNum) {
 
   setTimeout(() => {
     getList();
-  }, 200);
+  }, 500);
 }
