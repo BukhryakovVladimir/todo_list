@@ -56,13 +56,6 @@ func init() {
 	DbPassword := os.Getenv("DB_PASSWORD")
 	psql := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
 	db, err = sql.Open("postgres", psql)
-	fmt.Printf("DB_HOST: %s\n", DbHost)
-	fmt.Printf("DB_PORT: %s\n", DbPort)
-	fmt.Printf("DB_USER: %s\n", DbUser)
-	fmt.Printf("DB_NAME: %s\n", DbName)
-	fmt.Printf("DB_PASSWORD: %s\n", DbPassword)
-	fmt.Printf("SECRET_KEY: %s\n", secretKey)
-	fmt.Printf("JWT_NAME: %s\n", jwtName)
 
 	if err != nil {
 		panic(err)
@@ -588,12 +581,14 @@ func isValidPassword(password string) bool {
 }
 
 func main() {
+	corsOrigin := fmt.Sprintf("https://%s", os.Getenv("CORS_ORIGIN"))
+
 	r := chi.NewRouter()
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			w.Header().Set("Access-Control-Allow-Origin", "https://localhost")
+			w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
