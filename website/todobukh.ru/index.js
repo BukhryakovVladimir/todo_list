@@ -65,6 +65,8 @@ button.addEventListener("click", (e) => {
 
 function create(data) {
   addInput.value = "";
+  updateInputNumber.value = "";
+  updateInputTask.value = "";
   let str;
   let ol = document.getElementById("olist");
   let parsedData;
