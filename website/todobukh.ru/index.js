@@ -29,11 +29,15 @@ addForm.addEventListener("submit", (e) => {
     credentials: "include",
     //mode: "no-cors", //probably can delete that
     body: addInput,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная запись задачи в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
 
-  setTimeout(() => {
-    getList();
-  }, 500);
 });
 
 let updateForm = document.getElementById("updateForm");
@@ -50,11 +54,15 @@ updateForm.addEventListener("submit", (e) => {
     credentials: "include",
     //mode: "no-cors", //probably can delete that
     body: JSON.stringify({task_number: updateInputNumber, task_description: updateInputTask}),
+  }).then((response) => {
+    if (response.ok) {
+      // Успешное одновление задачи в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
 
-  setTimeout(() => {
-    getList();
-  }, 500);
 });
 
 let button = document.getElementById("show");
@@ -137,11 +145,14 @@ function setIsCompletedTrue(rowNum) {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная установка флага о выполнении задачи в значение true в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
-
-  setTimeout(() => {
-    getList();
-  }, 500);
 }
 
 function setIsCompletedFalse(rowNum) {
@@ -150,11 +161,14 @@ function setIsCompletedFalse(rowNum) {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная установка флага о выполнении задачи в значение false в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
-
-  setTimeout(() => {
-    getList();
-  }, 500);
 }
 
 function deleteTask(rowNum) {
@@ -163,9 +177,12 @@ function deleteTask(rowNum) {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная удаление задачи в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
-
-  setTimeout(() => {
-    getList();
-  }, 500);
 }
