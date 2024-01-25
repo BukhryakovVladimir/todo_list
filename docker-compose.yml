@@ -36,6 +36,9 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - JWT_NAME=${JWT_NAME}
       - CORS_ORIGIN=${CORS_ORIGIN}
+      - TSL_CERT=${TSL_CERT}
+      - TSL_KEY=${TSL_KEY}
+      - PORT=${PORT}
     volumes:
       - api:/usr/src/golang/
       - ./ssl:/etc/golang/ssl:ro
