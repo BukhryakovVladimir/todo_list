@@ -1,0 +1,3 @@
+**/website/var/log/nginx
+*.crt
+*.key
