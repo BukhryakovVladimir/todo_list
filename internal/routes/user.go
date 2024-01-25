@@ -83,6 +83,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 			tx.Rollback()
 			log.Println("signup_userDB QueryRowContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+			return
 		} else {
 			tx.Rollback()
 			// Added instead of http.Error to avoid Not a valid json error on frontend
@@ -101,6 +102,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 			tx.Rollback()
 			log.Println("signup_userDB ExecContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+			return
 		} else {
 			tx.Rollback()
 			http.Error(w, "Error inserting credentials", http.StatusInternalServerError)
@@ -115,6 +117,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 			tx.Rollback()
 			log.Println("signup_userDB Commit deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
+			return
 		} else {
 			http.Error(w, "Error committing transaction", http.StatusInternalServerError)
 			return
@@ -161,56 +164,57 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 		resp, _ := json.Marshal("Username not found")
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
+		return
 		//panic(err) //Do not panic, write response that no user with such login was found instead
-	} else {
-		//fmt.Println(userId)
-
-		if err := row.Err(); err != nil {
-			panic(err)
-		}
-
-		row = db.QueryRow(queryPassword, userId)
-		var password_hash string
-		if err := row.Scan(&password_hash); err != nil {
-			resp, _ := json.Marshal("Username not found")
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(resp)
-		} else {
-			//fmt.Println(password_hash)
-			if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
-				resp, _ := json.Marshal("Incorrect password")
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write(resp)
-			} else {
-
-				claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-					Issuer:    userId,
-					ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
-				})
-
-				token, err := claims.SignedString([]byte(secretKey))
-
-				if err != nil {
-					resp, _ := json.Marshal("Could not login")
-					w.WriteHeader(http.StatusUnauthorized)
-					w.Write(resp)
-					defer r.Body.Close()
-				}
-
-				tokenCookie := http.Cookie{
-					Name:     jwtName,
-					Value:    token,
-					Expires:  time.Now().Add(time.Hour * 24 * 30),
-					HttpOnly: false,
-				}
-
-				http.SetCookie(w, &tokenCookie)
-				resp, _ := json.Marshal("Successfully loged in")
-				w.WriteHeader(http.StatusOK)
-				w.Write(resp)
-			}
-		}
 	}
+	//fmt.Println(userId)
+
+	if err := row.Err(); err != nil {
+		panic(err)
+	}
+
+	row = db.QueryRow(queryPassword, userId)
+	var password_hash string
+	if err := row.Scan(&password_hash); err != nil {
+		resp, _ := json.Marshal("Username not found")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(resp)
+		return
+	}
+
+	//fmt.Println(password_hash)
+	if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
+		resp, _ := json.Marshal("Incorrect password")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(resp)
+		return
+	}
+
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    userId,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+	})
+
+	token, err := claims.SignedString([]byte(secretKey))
+
+	if err != nil {
+		resp, _ := json.Marshal("Could not login")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(resp)
+		return
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     jwtName,
+		Value:    token,
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		HttpOnly: false,
+	}
+
+	http.SetCookie(w, &tokenCookie)
+	resp, _ := json.Marshal("Successfully loged in")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
 }
 
 func User_userDB(w http.ResponseWriter, r *http.Request) {
@@ -227,39 +231,37 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 		resp, _ := json.Marshal("")
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
-		defer r.Body.Close()
+		return
+	}
+	token, err := jwtCheck(cookie)
+
+	//fmt.Println(token)
+	if err != nil {
+		resp, _ := json.Marshal("Unauthenticated")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(resp)
+		return
+	}
+	//fmt.Println(token)
+	claims := token.Claims.(*jwt.RegisteredClaims)
+	//fmt.Println(claims.Issuer)
+	query := `SELECT username FROM "user" WHERE user_id = $1`
+
+	var username string
+
+	if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
+		resp, _ := json.Marshal("Username not found")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(resp)
+		return
 	} else {
-		token, err := jwtCheck(cookie)
-
-		//fmt.Println(token)
-		if err != nil {
-			resp, _ := json.Marshal("Unauthenticated")
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write(resp)
-			defer r.Body.Close()
-		}
-		//fmt.Println(token)
-		claims := token.Claims.(*jwt.RegisteredClaims)
-		//fmt.Println(claims.Issuer)
-		query := `SELECT username FROM "user" WHERE user_id = $1`
-
-		var username string
-
-		if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
-			resp, _ := json.Marshal("Username not found")
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write(resp)
-			defer r.Body.Close()
-		} else {
-			resp, _ := json.Marshal(username)
-			w.WriteHeader(http.StatusOK)
-			w.Write(resp)
-		}
-
-		//fmt.Println(username)
-		//fmt.Println(claims.Issuer)
+		resp, _ := json.Marshal(username)
+		w.WriteHeader(http.StatusOK)
+		w.Write(resp)
 	}
 
+	//fmt.Println(username)
+	//fmt.Println(claims.Issuer)
 }
 
 // Обязательно латинские буквы, цифры и длина >= 3.
