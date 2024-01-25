@@ -30,8 +30,8 @@ signupForm.addEventListener("submit", (e) => {
   })
     .then((response) => {
       if (response.ok) {
-        // Успешная авторизаця, редирект на index.html.
-        window.location.href = "index.html";
+        // Успешная регистрация, редирект на login.html.
+        window.location.href = "login.html";
       } else {
         // Проверка http статуса 401 Unauthorized.
         return response.json(); // Парсинг JSON'а
