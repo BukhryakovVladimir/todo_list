@@ -43,14 +43,22 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isValidUsername(user.Username) {
-		resp, _ := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
+		resp, err := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
 	}
 
 	if !isValidPassword(user.Password) {
-		resp, _ := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
+		resp, err := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
@@ -87,7 +95,11 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 		} else {
 			tx.Rollback()
 			// Added instead of http.Error to avoid Not a valid json error on frontend
-			resp, _ := json.Marshal("Username is taken")
+			resp, err := json.Marshal("Username is taken")
+			if err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 			w.WriteHeader(http.StatusConflict)
 			w.Write(resp)
 			//http.Error(w, "Username is taken", http.StatusConflict)    Not a valid json on frontend error
@@ -124,7 +136,11 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, _ := json.Marshal("Signup successful")
+	resp, err := json.Marshal("Signup successful")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -147,7 +163,8 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(bytesBody, &user)
 
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	queryUsername := `SELECT user_id 
@@ -161,7 +178,11 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	row := db.QueryRow(queryUsername, user.Username)
 	var userId string
 	if err := row.Scan(&userId); err != nil {
-		resp, _ := json.Marshal("Username not found")
+		resp, err := json.Marshal("Username not found")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		return
@@ -170,13 +191,18 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(userId)
 
 	if err := row.Err(); err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	row = db.QueryRow(queryPassword, userId)
 	var password_hash string
 	if err := row.Scan(&password_hash); err != nil {
-		resp, _ := json.Marshal("Username not found")
+		resp, err := json.Marshal("Username not found")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		return
@@ -184,7 +210,11 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 
 	//fmt.Println(password_hash)
 	if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
-		resp, _ := json.Marshal("Incorrect password")
+		resp, err := json.Marshal("Incorrect password")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -198,7 +228,11 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	token, err := claims.SignedString([]byte(secretKey))
 
 	if err != nil {
-		resp, _ := json.Marshal("Could not login")
+		resp, err := json.Marshal("Could not login")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -212,7 +246,11 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &tokenCookie)
-	resp, _ := json.Marshal("Successfully loged in")
+	resp, err := json.Marshal("Successfully loged in")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
@@ -228,7 +266,11 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("")
+		resp, err := json.Marshal("")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		return
@@ -237,7 +279,11 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 
 	//fmt.Println(token)
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -250,12 +296,20 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 	var username string
 
 	if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
-		resp, _ := json.Marshal("Username not found")
+		resp, err := json.Marshal("Username not found")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
 	} else {
-		resp, _ := json.Marshal(username)
+		resp, err := json.Marshal(username)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}

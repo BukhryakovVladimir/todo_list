@@ -28,9 +28,14 @@ func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
 	return token, err
 }
 
-func InitConnPool() {
+func InitConnPool() error {
+	var err error
 	secretKey = os.Getenv("SECRET_KEY")
 	jwtName = os.Getenv("JWT_NAME")
 
-	db = postgres.Dial()
+	db, err = postgres.Dial()
+	if err != nil {
+		return err
+	}
+	return nil
 }

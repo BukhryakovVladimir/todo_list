@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -16,7 +17,7 @@ const (
 )
 
 // создаёт подключение к БД
-func Dial() *sql.DB {
+func Dial() (*sql.DB, error) {
 
 	var db *sql.DB // Пул соединений с БД
 
@@ -32,7 +33,8 @@ func Dial() *sql.DB {
 	db, err = sql.Open("postgres", psql)
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error starting server: %v", err)
+		return nil, err
 	}
 
 	db.SetMaxOpenConns(10)
@@ -42,10 +44,11 @@ func Dial() *sql.DB {
 	db.SetConnMaxLifetime(30 * time.Minute)
 
 	if err = db.Ping(); err != nil {
-		panic(err)
+		log.Fatalf("Error starting server: %v", err)
+		return nil, err
 	}
 
 	fmt.Println("connected to postgree")
 
-	return db
+	return db, nil
 }

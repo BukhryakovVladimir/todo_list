@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -14,7 +15,11 @@ import (
 
 func main() {
 
-	routes.InitConnPool()
+	err := routes.InitConnPool()
+
+	if err != nil {
+		log.Fatalf("Error connecting to Database: %v", err)
+	}
 
 	r := chi.NewRouter()
 
@@ -30,10 +35,10 @@ func main() {
 	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
 
 	// Use ListenAndServeTLS to start the HTTPS server
-	err := http.ListenAndServeTLS(port, certFile, keyFile, r)
+	err = http.ListenAndServeTLS(port, certFile, keyFile, r)
 	if err != nil {
 		// Handle error
-		panic(err)
+		log.Fatalf("Error starting server: %v", err)
 	}
 
 	// http.ListenAndServe(":3000", r)
