@@ -10,7 +10,7 @@ fetch("./config.json")
     ipAddress = config.ipAddress;
     port = config.port;
 
-    
+
   }).then(window.onload = () => { getList();})
   .catch((error) => console.error("Error fetching config.json:", error));
 
@@ -185,4 +185,18 @@ function deleteTask(rowNum) {
   }).catch((error) => {
     console.error("There was a problem with the fetch operation:", error);
   });
+}
+
+//Получение имени jwt токена из конфиг файла и удаление jwt.
+function logout() {
+  fetch("./config.json")
+    .then((response) => response.json())
+    .then((data) => {
+      const jwtName = data.jwtName;
+      document.cookie = `${jwtName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api;`;
+      window.location.reload();
+    })
+    .catch((error) => {
+      console.error("Error fetching JWT token:", error);
+    });
 }
