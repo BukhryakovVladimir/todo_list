@@ -327,5 +327,5 @@ func isValidPassword(password string) bool {
 
 	regexpPattern := regexp.MustCompile(pattern)
 
-	return regexpPattern.MatchString(password)
+	return regexpPattern.MatchString(password) && len(password) >= 8
 }
