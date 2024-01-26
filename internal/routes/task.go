@@ -13,8 +13,6 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-const queryTimeLimit int = 5 // Можно заменить на переменные среды
-
 // Записывает task_description в таблицу task
 func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request

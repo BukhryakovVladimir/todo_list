@@ -26,9 +26,18 @@ func main() {
 	todobukhhandler.SetupRoutes(r)
 
 	certFile := os.Getenv("TSL_CERT")
+	if certFile == "" {
+		log.Fatalf("Environment variable TSL_CERT is empty.")
+	}
 	keyFile := os.Getenv("TSL_KEY")
-
-	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
+	if keyFile == "" {
+		log.Fatalf("Environment variable TSL_KEY is empty.")
+	}
+	strPort := os.Getenv("PORT")
+	if strPort == "" {
+		log.Fatalf("Environment variable PORT is empty.")
+	}
+	port := fmt.Sprintf(":%s", strPort)
 
 	// Для запуска HTTPS сервера используется ListenAndServeTLS
 	err = http.ListenAndServeTLS(port, certFile, keyFile, r)
