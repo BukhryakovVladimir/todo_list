@@ -100,23 +100,39 @@ span {
   #addForm {
     margin: 0 auto;
     position: relative;
+    left: 1em;
   }
+
   #updateForm {
     margin: 0 auto;
     position: relative;
+    left: 1em;
+  }
+  #addInput {
+    width: 400px;
+  }
+  #updateInputNumber {
+    position: relative;
+    width: 50px;
+  }
+  #updateInputTask {
+    position: relative;
+    width: 335px;
   }
   #addButton {
     position: relative;
     bottom: 0.21em;
-    width: 3.6em;
+    width: 5em;
     height: 2.4em;
   }
+
   #updateButton {
     position: relative;
     bottom: 0.21em;
-    width: 3.6em;
+    width: 5em;
     height: 2.4em;
   }
+
   #indexLogin {
     position: relative;
     top: 0.1rem;
@@ -125,7 +141,7 @@ span {
   #indexLogout {
     position: relative;
     top: 0.5rem;
-    left: 8.2rem;
+    left: 11.3rem;
     bottom: 11rem;
     width: 7rem;
   }
@@ -141,14 +157,14 @@ span {
     border-spacing: 10px;
     position: relative;
     top: 2rem;
-    right: 1rem;
     width: 30rem;
+    left: 1rem;
     counter-reset: li;
     word-wrap: break-word;
   }
   ul header {
     position: relative;
-    left: 11.5rem;
+    left: 8.07rem;
   }
   li {
     display: table-row;
@@ -174,37 +190,36 @@ span {
   #addForm {
     margin: 0 auto;
     position: relative;
+    left: 1em;
   }
 
   #updateForm {
     margin: 0 auto;
     position: relative;
+    left: 1em;
   }
   #addInput {
-    /* width: 300px; */
+    width: 400px;
   }
   #updateInputNumber {
     position: relative;
-    right: 2em;
-    width: 100px;
+    width: 50px;
   }
   #updateInputTask {
     position: relative;
-    right: 2.05em;
-    /* width: 300px; */
+    width: 335px;
   }
   #addButton {
     position: relative;
     bottom: 0.21em;
-    width: 3.6em;
+    width: 5em;
     height: 2.4em;
   }
 
   #updateButton {
     position: relative;
-    right: 3.56em;
     bottom: 0.21em;
-    width: 3.6em;
+    width: 5em;
     height: 2.4em;
   }
 
@@ -216,7 +231,7 @@ span {
   #indexLogout {
     position: relative;
     top: 0.5rem;
-    left: 8.2rem;
+    left: 11.3rem;
     bottom: 11rem;
     width: 7rem;
   }
@@ -232,14 +247,14 @@ span {
     border-spacing: 10px;
     position: relative;
     top: 2rem;
-    right: 1rem;
     width: 30rem;
+    left: 1rem;
     counter-reset: li;
     word-wrap: break-word;
   }
   ul header {
     position: relative;
-    left: 11.5rem;
+    left: 8.07rem;
   }
   li {
     display: table-row;
@@ -265,30 +280,32 @@ span {
   #addForm {
     margin: 0 auto;
     position: relative;
+    left: 0em;
   }
   #updateForm {
     margin: 0 auto;
     position: relative;
+    left: 0em;
   }
   #addInput {
-    width: 300px;
+    width: 280px;
   }
   #updateInputNumber {
-    width: 100px;
+    width: 50px;
   }
   #updateInputTask {
-    width: 300px;
+    width: 215px;
   }
   #addButton {
     position: relative;
     bottom: 0.21em;
-    width: 3.6em;
+    width: 5em;
     height: 2.4em;
   }
   #updateButton {
     position: relative;
     bottom: 0.21em;
-    width: 3.6em;
+    width: 5em;
     height: 2.4em;
   }
   #indexLogin {
@@ -316,12 +333,13 @@ span {
     position: relative;
     top: 2rem;
     width: 20rem;
+    left: -2rem;
     counter-reset: li;
     word-wrap: break-word;
   }
   ul header {
     position: relative;
-    left: 6.5rem;
+    left: 6.07rem;
   }
   li {
     display: table-row;

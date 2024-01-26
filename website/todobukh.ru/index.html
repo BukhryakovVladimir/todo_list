@@ -14,18 +14,18 @@
     id="indexLogout"
     onclick='document.cookie = "buhry_ToDoList_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api;"; window.location.reload()'
   >
-    Log out
+    Выйти
   </button>
-    <p id="unauthorized">You have to log in to use to do list</p>
+    <p id="unauthorized">Вы должны войти чтобы использовать список задач</p>
     <p id="signedAs"></p>
     <form action="" id="addForm">
-      <input type="text" id="addInput" placeholder="Task" maxlength="1000" required />
-      <button type="submit" class="regularButton" id="addButton">Add</button>
+      <input type="text" id="addInput" placeholder="Задача" maxlength="1000" autocomplete="off" required />
+      <button type="submit" class="regularButton" id="addButton">Добавить</button>
     </form>
     <form action="" id="updateForm">
-      <input type="text" id="updateInputNumber" placeholder="Task №" maxlength="6" required />
-      <input type="text" id="updateInputTask" placeholder="Change task to" maxlength="1000" required />
-      <button type="submit" class="regularButton" id="updateButton">Update</button>
+      <input type="text" id="updateInputNumber" placeholder="№ " maxlength="6" autocomplete="off" required />
+      <input type="text" id="updateInputTask" placeholder="Новое описание" maxlength="1000" autocomplete="off" required />
+      <button type="submit" class="regularButton" id="updateButton">Обновить</button>
     </form>
     <button
       type="button"
@@ -33,11 +33,11 @@
       id="indexLogin"
       onclick="window.location.href = 'login.html';"
     >
-      Log in
+      Войти
     </button>
-    <button type="button" class="regularButton" id="show">Reload list</button>
+    <button type="button" class="regularButton" id="show">Обновить список</button>
     <ul id="olist">
-      <header>To Do List</header>
+      <header>Список задач</header>
     </ul>
     <script src="index.js"></script>
     <script src="getUser.js"></script>
