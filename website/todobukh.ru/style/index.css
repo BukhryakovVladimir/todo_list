@@ -141,7 +141,7 @@ span {
   #indexLogout {
     position: relative;
     top: 0.5rem;
-    left: 8.2rem;
+    left: 11.3rem;
     bottom: 11rem;
     width: 7rem;
   }
@@ -158,13 +158,13 @@ span {
     position: relative;
     top: 2rem;
     width: 30rem;
-    left: 1.5rem;
+    left: 1rem;
     counter-reset: li;
     word-wrap: break-word;
   }
   ul header {
     position: relative;
-    left: 7.1rem;
+    left: 8.07rem;
   }
   li {
     display: table-row;
@@ -231,7 +231,7 @@ span {
   #indexLogout {
     position: relative;
     top: 0.5rem;
-    left: 8.2rem;
+    left: 11.3rem;
     bottom: 11rem;
     width: 7rem;
   }
@@ -248,13 +248,13 @@ span {
     position: relative;
     top: 2rem;
     width: 30rem;
-    left: 1.5rem;
+    left: 1rem;
     counter-reset: li;
     word-wrap: break-word;
   }
   ul header {
     position: relative;
-    left: 7.1rem;
+    left: 8.07rem;
   }
   li {
     display: table-row;
@@ -339,7 +339,7 @@ span {
   }
   ul header {
     position: relative;
-    left: 5.6rem;
+    left: 6.07rem;
   }
   li {
     display: table-row;

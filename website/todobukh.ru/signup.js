@@ -38,21 +38,34 @@ signupForm.addEventListener("submit", (e) => {
       }
     })
     .then((responseJson) => {
-      switch (responseJson.slice(0, 8)) {
-        case "Username":
-          invalidUsername.innerHTML = responseJson;
+      switch (responseJson) {
+        case "Username is taken":
+          invalidUsername.innerHTML = "Имя пользователя занято.";
           invalidPassword.innerHTML = "Invalid Password placeholder";
 
           invalidUsername.style.visibility = "visible";
           invalidPassword.style.visibility = "hidden";
           break;
-        case "Password":
+        case "Username should have at least 3 characters and consist only of English letters and digits.":
+          invalidUsername.innerHTML = "Длина имени пользователя должна быть не менее 3-х символов. Имя пользователя может состоять из букв латинского алфавита и цифр.";
+          invalidPassword.innerHTML = "Invalid Password placeholder";
+
+          invalidUsername.style.visibility = "visible";
+          invalidPassword.style.visibility = "hidden";
+          break;  
+        case "Password should have at least 8 characters and include both English letters and digits. Special characters optionally.":
           invalidUsername.innerHTML = "Invalid Username placeholder";
-          invalidPassword.innerHTML = responseJson;
+          invalidPassword.innerHTML = "Длина пароля должна быть не менее 8-и символов. Пароль должен содержать в себе буквы латинского алфавита и цифры. Специальные сиволы опциональны.";
 
           invalidUsername.style.visibility = "hidden";
           invalidPassword.style.visibility = "visible";
           break;
+        default:
+          invalidUsername.innerHTML = "Invalid Username placeholder";
+          invalidPassword.innerHTML = "Ошибка сервера.";
+
+          invalidUsername.style.visibility = "hidden";
+          invalidPassword.style.visibility = "visible";
       }
     })
     .catch((error) => {

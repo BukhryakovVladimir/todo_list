@@ -46,6 +46,6 @@ async function getUser() {
     olist.style.display = "block";
     unauthorized.style.display = "none";
     logout.style.display = "block";
-    signedAs.innerHTML = "Currently signed as: " + username;
+    signedAs.innerHTML = "Вы вошли как: " + username;
   }
 }
