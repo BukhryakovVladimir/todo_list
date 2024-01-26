@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	MaxOpenConns    int = 10 // заменить на переменные среды
-	MaxIdleConns    int = 5  // заменить на переменные среды
-	ConnMaxLifetime int = 30 // заменить на переменные среды
+	MaxOpenConns    int = 10 // Можно заменить на переменные среды
+	MaxIdleConns    int = 5  // Можно заменить на переменные среды
+	ConnMaxLifetime int = 30 // Можно заменить на переменные среды
 )
 
 // создаёт подключение к БД

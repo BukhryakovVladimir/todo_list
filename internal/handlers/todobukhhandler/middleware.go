@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// Устанавливает политику CORS
 func corsMiddleware(next http.Handler) http.Handler {
 	corsOrigin := fmt.Sprintf("https://%s", os.Getenv("CORS_ORIGIN"))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

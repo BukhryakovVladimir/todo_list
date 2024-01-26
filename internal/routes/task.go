@@ -13,7 +13,7 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-const queryTimeLimit int = 5 // заменить на переменные среды
+const queryTimeLimit int = 5 // Можно заменить на переменные среды
 
 // Записывает task_description в таблицу task
 func Write_taskDB(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +163,6 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
 	resp, err := json.Marshal("Task changed successfully")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -246,7 +245,6 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
 	resp, err := json.Marshal("delete successfully")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -410,7 +408,6 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
 	resp, err := json.Marshal("set is_completed = true successfully")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -494,7 +491,6 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
 	resp, err := json.Marshal("set is_completed=true successfully")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

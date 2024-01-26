@@ -19,7 +19,7 @@ var (
 	jwtName   string
 )
 
-// jwtCheck парсит JWT токен из переданного HTTP cookie используя секретный ключ secretKey
+// Парсит JWT токен из переданного HTTP cookie используя секретный ключ secretKey
 func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
@@ -28,6 +28,7 @@ func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
 	return token, err
 }
 
+// Создаёт пул соединений с БД
 func InitConnPool() error {
 	var err error
 	secretKey = os.Getenv("SECRET_KEY")
