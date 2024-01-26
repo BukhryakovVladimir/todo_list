@@ -2,50 +2,86 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	MaxOpenConns    int = 10 // заменить на переменные среды
-	MaxIdleConns    int = 5  // заменить на переменные среды
-	ConnMaxLifetime int = 30 // заменить на переменные среды
-)
-
 // создаёт подключение к БД
-func Dial() *sql.DB {
+func Dial() (*sql.DB, error) {
 
 	var db *sql.DB // Пул соединений с БД
 
-	var err error
-
 	DbHost := os.Getenv("DB_HOST")
+	if DbHost == "" {
+		return nil, errors.New("Environment variable DB_HOST is empty.")
+	}
 	DbPort := os.Getenv("DB_PORT")
+	if DbPort == "" {
+		return nil, errors.New("Environment variable DB_PORT is empty.")
+	}
 	DbUser := os.Getenv("DB_USER")
+	if DbUser == "" {
+		return nil, errors.New("Environment variable DB_USER is empty.")
+	}
 	DbName := os.Getenv("DB_NAME")
+	if DbName == "" {
+		return nil, errors.New("Environment variable DB_NAME is empty.")
+	}
 	DbPassword := os.Getenv("DB_PASSWORD")
+	if DbPassword == "" {
+		return nil, errors.New("Environment variable DB_PASSWORD is empty.")
+	}
+	strMaxOpenConns := os.Getenv("MAX_OPEN_CONNS")
+	if strMaxOpenConns == "" {
+		return nil, errors.New("Environment variable MAX_OPEN_CONNS is empty.")
+	}
+	strMaxIdleConns := os.Getenv("MAX_IDLE_CONNS")
+	if strMaxIdleConns == "" {
+		return nil, errors.New("Environment variable MAX_IDLE_CONNS is empty.")
+	}
+	strConnMaxLifetime := os.Getenv("CONN_MAX_LIFETIME")
+	if strConnMaxLifetime == "" {
+		return nil, errors.New("Environment variable CONN_MAX_LIFETIME is empty.")
+	}
+	maxOpenConns, err := strconv.Atoi(strMaxOpenConns)
+	if err != nil {
+		return nil, err
+	}
+	maxIdleConns, err := strconv.Atoi(strMaxIdleConns)
+	if err != nil {
+		return nil, err
+	}
+	connMaxLifetime, err := strconv.Atoi(strConnMaxLifetime)
+	if err != nil {
+		return nil, err
+	}
 
 	psql := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
 	db, err = sql.Open("postgres", psql)
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error starting server: %v", err)
+		return nil, err
 	}
 
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(maxOpenConns)
 
-	db.SetMaxIdleConns(5)
+	db.SetMaxIdleConns(maxIdleConns)
 
-	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Minute)
 
 	if err = db.Ping(); err != nil {
-		panic(err)
+		log.Fatalf("Error starting server: %v", err)
+		return nil, err
 	}
 
 	fmt.Println("connected to postgree")
 
-	return db
+	return db, nil
 }

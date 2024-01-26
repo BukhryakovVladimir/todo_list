@@ -6,6 +6,7 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/routes"
 )
 
+// Устанавливает маршруты
 func SetupRoutes(r chi.Router) {
 	r.Use(corsMiddleware)
 

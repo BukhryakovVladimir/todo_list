@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -14,27 +15,33 @@ import (
 
 func main() {
 
-	routes.InitConnPool()
+	err := routes.InitConnPool()
+
+	if err != nil {
+		log.Fatalf("Error connecting to Database: %v", err)
+	}
 
 	r := chi.NewRouter()
 
 	todobukhhandler.SetupRoutes(r)
 
-	//TSL_CERT=/etc/golang/ssl/localhost.crt # Полный путь к сертификату
-	//TSL_KEY=/etc/golang/ssl/localhost.key # Полный путь к ключу
-	//PORT=3000 # Только порт (цеоле число)
-
-	certFile := os.Getenv("TSL_CERT") // Следует брать название сертификата из переменных среды (getenv)
-	keyFile := os.Getenv("TSL_KEY")   // Следует брать название ключа из переменных среды (getenv)
-
-	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
-
-	// Use ListenAndServeTLS to start the HTTPS server
-	err := http.ListenAndServeTLS(port, certFile, keyFile, r)
-	if err != nil {
-		// Handle error
-		panic(err)
+	certFile := os.Getenv("TSL_CERT")
+	if certFile == "" {
+		log.Fatalf("Environment variable TSL_CERT is empty.")
 	}
+	keyFile := os.Getenv("TSL_KEY")
+	if keyFile == "" {
+		log.Fatalf("Environment variable TSL_KEY is empty.")
+	}
+	strPort := os.Getenv("PORT")
+	if strPort == "" {
+		log.Fatalf("Environment variable PORT is empty.")
+	}
+	port := fmt.Sprintf(":%s", strPort)
 
-	// http.ListenAndServe(":3000", r)
+	// Для запуска HTTPS сервера используется ListenAndServeTLS
+	err = http.ListenAndServeTLS(port, certFile, keyFile, r)
+	if err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }

@@ -15,8 +15,8 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-// Добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials
-// Обе операции должны выполнится, поэтому находятся в одной транзакции
+// Добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials.
+// Обе операции должны выполнится, поэтому находятся в одной транзакции.
 // Отношение таблиц	 1 to 1
 func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
@@ -43,14 +43,22 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isValidUsername(user.Username) {
-		resp, _ := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
+		resp, err := json.Marshal("Username should have at least 3 characters and consist only of English letters and digits.")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
 	}
 
 	if !isValidPassword(user.Password) {
-		resp, _ := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
+		resp, err := json.Marshal("Password should have at least 8 characters and include both English letters and digits. Special characters optionally.")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
 		return
@@ -86,11 +94,15 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 			return
 		} else {
 			tx.Rollback()
-			// Added instead of http.Error to avoid Not a valid json error on frontend
-			resp, _ := json.Marshal("Username is taken")
+			// Используется вместо http.Error чтобы не было ошибки на фронте.
+			resp, err := json.Marshal("Username is taken")
+			if err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 			w.WriteHeader(http.StatusConflict)
 			w.Write(resp)
-			//http.Error(w, "Username is taken", http.StatusConflict)    Not a valid json on frontend error
+			//http.Error(w, "Username is taken", http.StatusConflict) Будет выводить ошибку на фронте. Не менять.
 			return
 		}
 	}
@@ -124,14 +136,18 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, _ := json.Marshal("Signup successful")
+	resp, err := json.Marshal("Signup successful")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
 }
 
-// MEMO: return to task deletion by row problem after doing this
+// Аутентифицирует пользователя.
 func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
@@ -147,7 +163,8 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(bytesBody, &user)
 
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	queryUsername := `SELECT user_id 
@@ -161,30 +178,40 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	row := db.QueryRow(queryUsername, user.Username)
 	var userId string
 	if err := row.Scan(&userId); err != nil {
-		resp, _ := json.Marshal("Username not found")
+		resp, err := json.Marshal("Username not found")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		return
-		//panic(err) //Do not panic, write response that no user with such login was found instead
 	}
-	//fmt.Println(userId)
 
 	if err := row.Err(); err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	row = db.QueryRow(queryPassword, userId)
 	var password_hash string
 	if err := row.Scan(&password_hash); err != nil {
-		resp, _ := json.Marshal("Username not found")
+		resp, err := json.Marshal("Username not found")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		return
 	}
 
-	//fmt.Println(password_hash)
 	if err := bcrypt.CompareHashAndPassword([]byte(password_hash), []byte(user.Password)); err != nil {
-		resp, _ := json.Marshal("Incorrect password")
+		resp, err := json.Marshal("Incorrect password")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -198,7 +225,11 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	token, err := claims.SignedString([]byte(secretKey))
 
 	if err != nil {
-		resp, _ := json.Marshal("Could not login")
+		resp, err := json.Marshal("Could not login")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -212,11 +243,16 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &tokenCookie)
-	resp, _ := json.Marshal("Successfully loged in")
+	resp, err := json.Marshal("Successfully loged in")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
 
+// Находит и выводит имя пользователя с помощью jwt cookie.
 func User_userDB(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили GET request
 	if r.Method != http.MethodGet {
@@ -228,43 +264,55 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("")
+		resp, err := json.Marshal("")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(resp)
 		return
 	}
 	token, err := jwtCheck(cookie)
 
-	//fmt.Println(token)
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
 	}
-	//fmt.Println(token)
+
 	claims := token.Claims.(*jwt.RegisteredClaims)
-	//fmt.Println(claims.Issuer)
+
 	query := `SELECT username FROM "user" WHERE user_id = $1`
 
 	var username string
 
 	if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
-		resp, _ := json.Marshal("Username not found")
+		resp, err := json.Marshal("Username not found")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
 	} else {
-		resp, _ := json.Marshal(username)
+		resp, err := json.Marshal(username)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(resp)
 	}
-
-	//fmt.Println(username)
-	//fmt.Println(claims.Issuer)
 }
 
-// Обязательно латинские буквы, цифры и длина >= 3.
+// RegEx. Обязательно латинские буквы, цифры и длина >= 3.
 func isValidUsername(username string) bool {
 	pattern := "^[a-zA-Z0-9]{3,}$"
 
@@ -273,11 +321,11 @@ func isValidUsername(username string) bool {
 	return regexpPattern.MatchString(username)
 }
 
-// Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
+// RegEx. Обязательно латинские буквы, цифры и длина >= 8. Опционально специальные символы.
 func isValidPassword(password string) bool {
 	pattern := `^[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*[a-zA-Z]+[0-9!@#$%^&*()-_=+,.?;:{}|<>]*[0-9]+[a-zA-Z0-9!@#$%^&*()-_=+,.?;:{}|<>]*$`
 
 	regexpPattern := regexp.MustCompile(pattern)
 
-	return regexpPattern.MatchString(password)
+	return regexpPattern.MatchString(password) && len(password) >= 8
 }

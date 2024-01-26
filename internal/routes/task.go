@@ -13,8 +13,6 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-const queryTimeLimit int = 5 // заменить на переменные среды
-
 // Записывает task_description в таблицу task
 func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
@@ -27,7 +25,11 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -35,7 +37,11 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	token, err := jwtCheck(cookie)
 
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -46,9 +52,10 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	query := `INSERT INTO task(user_id, task_description)
 			   	 VALUES($1, $2);`
 
-	bytesBody, errb := io.ReadAll(r.Body)
-	if errb != nil {
-		panic(errb)
+	bytesBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	stringBody := string(bytesBody)
@@ -70,7 +77,11 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, _ := json.Marshal("Write successful")
+	resp, err := json.Marshal("Write successful")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
 }
@@ -92,12 +103,17 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	json.Unmarshal(bytesBody, &updateTask)
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	cookie, err := r.Cookie(jwtName)
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -105,7 +121,11 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	token, err := jwtCheck(cookie)
 	if err != nil {
-		resp, _ := json.Marshal("Error while parsing jwt")
+		resp, err := json.Marshal("Error while parsing jwt")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -141,8 +161,11 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
-	resp, _ := json.Marshal("Task changed successfully")
+	resp, err := json.Marshal("Task changed successfully")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
@@ -160,7 +183,11 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -168,7 +195,11 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	token, err := jwtCheck(cookie)
 
 	if err != nil {
-		resp, _ := json.Marshal("Error while parsing jwt")
+		resp, err := json.Marshal("Error while parsing jwt")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -189,7 +220,8 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	bytesBody, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	stringBody := string(bytesBody)
@@ -211,8 +243,11 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
-	resp, _ := json.Marshal("delete successfully")
+	resp, err := json.Marshal("delete successfully")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 	w.Write(resp)
 }
@@ -230,7 +265,11 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -238,7 +277,11 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 	token, err := jwtCheck(cookie)
 
 	if err != nil {
-		resp, _ := json.Marshal("Error while parsing jwt")
+		resp, err := json.Marshal("Error while parsing jwt")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -250,7 +293,8 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.Query(query, claims.Issuer)
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 	defer rows.Close()
 
@@ -259,20 +303,30 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var task model.Task
 		if err := rows.Scan(&task.TaskDescription, &task.IsCompleted); err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
 
 		tasks = append(tasks, task)
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
-	resp, _ := json.Marshal(tasks)
+	resp, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
@@ -291,7 +345,11 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -299,7 +357,11 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	token, err := jwtCheck(cookie)
 
 	if err != nil {
-		resp, _ := json.Marshal("Error while parsing jwt")
+		resp, err := json.Marshal("Error while parsing jwt")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -321,7 +383,8 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	bytesBody, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	stringBody := string(bytesBody)
@@ -343,8 +406,11 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
-	resp, _ := json.Marshal("set is_completed = true successfully")
+	resp, err := json.Marshal("set is_completed = true successfully")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
@@ -362,7 +428,11 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(jwtName)
 
 	if err != nil {
-		resp, _ := json.Marshal("Unauthenticated")
+		resp, err := json.Marshal("Unauthenticated")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -370,7 +440,11 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 	token, err := jwtCheck(cookie)
 
 	if err != nil {
-		resp, _ := json.Marshal("Error while parsing jwt")
+		resp, err := json.Marshal("Error while parsing jwt")
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(resp)
 		return
@@ -392,7 +466,8 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 	bytesBody, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		panic(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	stringBody := string(bytesBody)
@@ -414,8 +489,11 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// fmt.Println(claims.Issuer, stringBody)
-	resp, _ := json.Marshal("set is_completed=true successfully")
+	resp, err := json.Marshal("set is_completed=true successfully")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
