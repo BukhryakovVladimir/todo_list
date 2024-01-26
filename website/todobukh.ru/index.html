@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" 
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>To Do List</title>
+    <link rel="stylesheet" href="./style/index.css" />
+  </head>
+  <body>
+    <button
+    type="button"
+    class="regularButton"
+    id="indexLogout"
+    onclick='document.cookie = "buhry_ToDoList_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api;"; window.location.reload()'
+  >
+    Выйти
+  </button>
+    <p id="unauthorized">Вы должны войти чтобы использовать список задач</p>
+    <p id="signedAs"></p>
+    <form action="" id="addForm">
+      <input type="text" id="addInput" placeholder="Задача" maxlength="1000" autocomplete="off" required />
+      <button type="submit" class="regularButton" id="addButton">Добавить</button>
+    </form>
+    <form action="" id="updateForm">
+      <input type="text" id="updateInputNumber" placeholder="№ " maxlength="6" autocomplete="off" required />
+      <input type="text" id="updateInputTask" placeholder="Новое описание" maxlength="1000" autocomplete="off" required />
+      <button type="submit" class="regularButton" id="updateButton">Обновить</button>
+    </form>
+    <button
+      type="button"
+      class="regularButton"
+      id="indexLogin"
+      onclick="window.location.href = 'login.html';"
+    >
+      Войти
+    </button>
+    <button type="button" class="regularButton" id="show">Обновить список</button>
+    <ul id="olist">
+      <header>Список задач</header>
+    </ul>
+    <script src="index.js"></script>
+    <script src="getUser.js"></script>
+  </body>
+</html>

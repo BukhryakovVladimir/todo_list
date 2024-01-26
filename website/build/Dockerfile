@@ -5,13 +5,13 @@ FROM nginx:latest
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy the custom Nginx configuration
-COPY ./nginx-config/sites-enabled/todobukh.conf /etc/nginx/conf.d/
+COPY ./website/nginx/sites-enabled/todobukh.conf /etc/nginx/conf.d/
 
 # Create a directory for the frontend code
 RUN mkdir -p /usr/share/nginx/www/todobukh.ru
 
 # Copy the frontend code into the container
-COPY ./www/todobukh.ru /usr/share/nginx/www/todobukh.ru
+COPY ./website/todobukh.ru /usr/share/nginx/www/todobukh.ru
 
 # Set permissions if necessary
 # RUN chown -R nginx:nginx /usr/share/nginx/www/todobukh.ru

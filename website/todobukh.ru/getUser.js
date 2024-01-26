@@ -33,6 +33,7 @@ async function getUser() {
   if (username === "" || typeof username === "undefined") {
     login.style.display = "block";
     addForm.style.display = "none";
+    updateForm.style.display = "none";
     show.style.display = "none";
     olist.style.display = "none";
     unauthorized.style.display = "block";
@@ -40,10 +41,11 @@ async function getUser() {
   } else {
     login.style.display = "none";
     addForm.style.display = "block";
+    updateForm.style.display = "block";
     show.style.display = "block";
     olist.style.display = "block";
     unauthorized.style.display = "none";
     logout.style.display = "block";
-    signedAs.innerHTML = "Currently signed as: " + username;
+    signedAs.innerHTML = "Вы вошли как: " + username;
   }
 }

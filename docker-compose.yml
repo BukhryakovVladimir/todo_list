@@ -4,12 +4,12 @@ services:
     container_name: todobukh-nginx
     build:
       context: .
-      dockerfile: ./build/nginx/Dockerfile
+      dockerfile: ./website/build/Dockerfile
     volumes:
-      - ./var/log/nginx:/var/log/nginx
-      - ./nginx-config/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./website/var/log/nginx:/var/log/nginx
+      - ./website/nginx/sites-enabled:/etc/nginx/sites-enabled:ro
       - ./ssl:/etc/nginx/ssl:ro
-      - ./www/todobukh.ru:/var/www/todobukh.ru
+      - ./website/todobukh.ru:/var/www/todobukh.ru
     ports:
       - "80:80"
       - "443:443"
@@ -23,7 +23,7 @@ services:
     container_name: todobukh_golang
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./build/package/Dockerfile
     ports:
       - 3000:3000 
     restart: on-failure
@@ -36,6 +36,13 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - JWT_NAME=${JWT_NAME}
       - CORS_ORIGIN=${CORS_ORIGIN}
+      - TSL_CERT=${TSL_CERT}
+      - TSL_KEY=${TSL_KEY}
+      - PORT=${PORT}
+      - QUERY_TIME_LIMIT=${QUERY_TIME_LIMIT}
+      - MAX_OPEN_CONNS=${MAX_OPEN_CONNS} 
+      - MAX_IDLE_CONNS=${MAX_IDLE_CONNS}
+      - CONN_MAX_LIFETIME=${CONN_MAX_LIFETIME}
     volumes:
       - api:/usr/src/golang/
       - ./ssl:/etc/golang/ssl:ro
@@ -57,7 +64,7 @@ services:
       - '5432:5432'
     volumes:
       - database_postgres:/var/lib/postgresql/data
-      - ./postgres-config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./internal/postgres/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - todobukh
     

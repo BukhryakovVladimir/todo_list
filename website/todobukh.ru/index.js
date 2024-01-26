@@ -9,12 +9,12 @@ fetch("./config.json")
     // Use config as a regular JSON object
     ipAddress = config.ipAddress;
     port = config.port;
-  })
+
+    
+  }).then(window.onload = () => { getList();})
   .catch((error) => console.error("Error fetching config.json:", error));
 
-window.onload = () => {
-  getList();
-};
+
 
 let addForm = document.getElementById("addForm");
 // add button to delete element from to-do list by it's respectful number
@@ -29,11 +29,40 @@ addForm.addEventListener("submit", (e) => {
     credentials: "include",
     //mode: "no-cors", //probably can delete that
     body: addInput,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная запись задачи в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
 
-  setTimeout(() => {
-    getList();
-  }, 200);
+});
+
+let updateForm = document.getElementById("updateForm");
+// add button to delete element from to-do list by it's respectful number
+updateForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  let updateInputNumber = document.getElementById("updateInputNumber").value;
+  let updateInputTask = document.getElementById("updateInputTask").value;
+
+  fetch(`https://${ipAddress}:${port}/api/update`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    //mode: "no-cors", //probably can delete that
+    body: JSON.stringify({task_number: updateInputNumber, task_description: updateInputTask}),
+  }).then((response) => {
+    if (response.ok) {
+      // Успешное одновление задачи в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
+  });
+
 });
 
 let button = document.getElementById("show");
@@ -44,6 +73,8 @@ button.addEventListener("click", (e) => {
 
 function create(data) {
   addInput.value = "";
+  updateInputNumber.value = "";
+  updateInputTask.value = "";
   let str;
   let ol = document.getElementById("olist");
   let parsedData;
@@ -114,11 +145,14 @@ function setIsCompletedTrue(rowNum) {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная установка флага о выполнении задачи в значение true в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
-
-  setTimeout(() => {
-    getList();
-  }, 200);
 }
 
 function setIsCompletedFalse(rowNum) {
@@ -127,11 +161,14 @@ function setIsCompletedFalse(rowNum) {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная установка флага о выполнении задачи в значение false в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
-
-  setTimeout(() => {
-    getList();
-  }, 200);
 }
 
 function deleteTask(rowNum) {
@@ -140,9 +177,12 @@ function deleteTask(rowNum) {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: rowNum,
+  }).then((response) => {
+    if (response.ok) {
+      // Успешная удаление задачи в БД, вывод обновлённого списка.
+      getList();
+    }
+  }).catch((error) => {
+    console.error("There was a problem with the fetch operation:", error);
   });
-
-  setTimeout(() => {
-    getList();
-  }, 200);
 }
