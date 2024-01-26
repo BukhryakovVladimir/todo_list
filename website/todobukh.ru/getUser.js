@@ -47,5 +47,6 @@ async function getUser() {
     unauthorized.style.display = "none";
     logout.style.display = "block";
     signedAs.innerHTML = "Вы вошли как: " + username;
+    signedAs.style.display = "block";
   }
 }

@@ -98,12 +98,14 @@ span {
     align-items: center;
   }
   #addForm {
+    display: none;
     margin: 0 auto;
     position: relative;
     left: 1em;
   }
 
   #updateForm {
+    display: none;
     margin: 0 auto;
     position: relative;
     left: 1em;
@@ -134,11 +136,13 @@ span {
   }
 
   #indexLogin {
+    display: none;
     position: relative;
     top: 0.1rem;
     width: 7rem;
   }
   #indexLogout {
+    display: none;
     position: relative;
     top: 0.5rem;
     left: 11.3rem;
@@ -146,6 +150,7 @@ span {
     width: 7rem;
   }
   #show {
+    display: none;
     position: relative;
     top: 2rem;
     height: 2.5rem;
@@ -188,12 +193,14 @@ span {
     align-items: center;
   }
   #addForm {
+    display: none;
     margin: 0 auto;
     position: relative;
     left: 1em;
   }
 
   #updateForm {
+    display: none;
     margin: 0 auto;
     position: relative;
     left: 1em;
@@ -224,11 +231,13 @@ span {
   }
 
   #indexLogin {
+    display: none;
     position: relative;
     top: 0.1rem;
     width: 7rem;
   }
   #indexLogout {
+    display: none;
     position: relative;
     top: 0.5rem;
     left: 11.3rem;
@@ -236,6 +245,7 @@ span {
     width: 7rem;
   }
   #show {
+    display: none;
     position: relative;
     top: 2rem;
     height: 2.5rem;
@@ -278,11 +288,13 @@ span {
     align-items: center;
   }
   #addForm {
+    display: none;
     margin: 0 auto;
     position: relative;
     left: 0em;
   }
   #updateForm {
+    display: none;
     margin: 0 auto;
     position: relative;
     left: 0em;
@@ -309,11 +321,13 @@ span {
     height: 2.4em;
   }
   #indexLogin {
+    display: none;
     position: relative;
     top: 0.1rem;
     width: 7rem;
   }
   #indexLogout {
+    display: none;
     position: relative;
     top: 0.5rem;
     left: 6.6rem;
@@ -321,6 +335,7 @@ span {
     width: 7rem;
   }
   #show {
+    display: none;
     position: relative;
     top: 2rem;
     height: 2.5rem;
