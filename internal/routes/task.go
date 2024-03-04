@@ -32,7 +32,10 @@ func WriteTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -44,7 +47,10 @@ func WriteTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -84,7 +90,10 @@ func WriteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // UpdateTask обновляет task_description
@@ -116,7 +125,10 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -128,7 +140,10 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -168,7 +183,10 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // DeleteTask удаляет строку таблицы task по номеру строки.
@@ -190,7 +208,10 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -202,7 +223,10 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -250,7 +274,10 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // ReadTask возвращает строки task_description из таблицы task
@@ -272,7 +299,10 @@ func ReadTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -284,7 +314,10 @@ func ReadTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -330,7 +363,10 @@ func ReadTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // SetTaskIsCompletedTrue устанавливает флаг обозначающий выполнение задачи в значение true
@@ -352,7 +388,10 @@ func SetTaskIsCompletedTrue(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -364,7 +403,10 @@ func SetTaskIsCompletedTrue(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -413,7 +455,10 @@ func SetTaskIsCompletedTrue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // SetTaskIsCompletedFalse устанавливает флаг обозначающий выполнение задачи в значение false
@@ -435,7 +480,10 @@ func SetTaskIsCompletedFalse(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -447,7 +495,10 @@ func SetTaskIsCompletedFalse(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -496,5 +547,8 @@ func SetTaskIsCompletedFalse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }

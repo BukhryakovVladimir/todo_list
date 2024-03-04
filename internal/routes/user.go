@@ -50,7 +50,10 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -61,7 +64,10 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -102,7 +108,10 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			w.WriteHeader(http.StatusConflict)
-			w.Write(resp)
+			_, err = w.Write(resp)
+			if err != nil {
+				log.Printf("Write failed: %v\n", err)
+			}
 			//http.Error(w, "Username is taken", http.StatusConflict) Будет выводить ошибку на фронте. Не менять.
 			return
 		}
@@ -145,7 +154,10 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // LoginUser аутентифицирует пользователя.
@@ -161,10 +173,14 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	bytesBody, err := io.ReadAll(r.Body)
 
-	json.Unmarshal(bytesBody, &user)
-
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(bytesBody, &user)
+	if err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -185,7 +201,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -203,7 +222,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -214,7 +236,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -232,7 +257,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -250,7 +278,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
 // FindUser находит и выводит имя пользователя с помощью jwt cookie.
@@ -271,7 +302,10 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -283,7 +317,10 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -300,7 +337,10 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	} else {
 		resp, err := json.Marshal(username)
@@ -309,7 +349,10 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 	}
 }
 
