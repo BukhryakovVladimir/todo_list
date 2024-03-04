@@ -195,7 +195,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 					  FROM credentials
 					  WHERE user_id = $1`
 
-	row := db.QueryRow(queryUsername, user.Username)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+	defer cancel()
+
+	row := db.QueryRowContext(ctx, queryUsername, user.Username)
 	var userId string
 	if err := row.Scan(&userId); err != nil {
 		resp, err := json.Marshal("Username not found")
@@ -217,7 +220,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row = db.QueryRow(queryPassword, userId)
+	row = db.QueryRowContext(ctx, queryPassword, userId)
 	var password_hash string
 	if err := row.Scan(&password_hash); err != nil {
 		resp, err := json.Marshal("Username not found")
@@ -340,7 +343,10 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 
 	var username string
 
-	if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+	defer cancel()
+
+	if err := db.QueryRowContext(ctx, query, claims.Issuer).Scan(&username); err != nil {
 		resp, err := json.Marshal("Username not found")
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
