@@ -16,10 +16,10 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-// Добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials.
+// SignupUser добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials.
 // Обе операции должны выполнится, поэтому находятся в одной транзакции.
 // Отношение таблиц	 1 to 1
-func Signup_userDB(w http.ResponseWriter, r *http.Request) {
+func SignupUser(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
@@ -148,8 +148,8 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Аутентифицирует пользователя.
-func Login_userDB(w http.ResponseWriter, r *http.Request) {
+// LoginUser аутентифицирует пользователя.
+func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
@@ -253,8 +253,8 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Находит и выводит имя пользователя с помощью jwt cookie.
-func User_userDB(w http.ResponseWriter, r *http.Request) {
+// FindUser находит и выводит имя пользователя с помощью jwt cookie.
+func FindUser(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили GET request
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP method. Use GET.", http.StatusMethodNotAllowed)

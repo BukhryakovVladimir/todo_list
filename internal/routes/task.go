@@ -14,8 +14,8 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-// Записывает task_description в таблицу task
-func Write_taskDB(w http.ResponseWriter, r *http.Request) {
+// WriteTask записывает task_description в таблицу task
+func WriteTask(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
@@ -87,8 +87,8 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Обновляет task_description
-func Update_taskDB(w http.ResponseWriter, r *http.Request) {
+// UpdateTask обновляет task_description
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	// Используем r.Method чтобы удостовериться что получили PUT request
 	if r.Method != http.MethodPut {
@@ -171,8 +171,8 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Удаляет строку таблицы task по номеру строки.
-func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
+// DeleteTask удаляет строку таблицы task по номеру строки.
+func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили DELETE request
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Invalid HTTP method. Use DELETE.", http.StatusMethodNotAllowed)
@@ -253,8 +253,8 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Возвращает строки task_descirption из таблицы task
-func Read_taskDB(w http.ResponseWriter, r *http.Request) {
+// ReadTask возвращает строки task_description из таблицы task
+func ReadTask(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили GET request
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP method. Use GET.", http.StatusMethodNotAllowed)
@@ -333,8 +333,8 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Устанавливает флаг обозначающий выполнение задачи в значение true
-func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
+// SetTaskIsCompletedTrue устанавливает флаг обозначающий выполнение задачи в значение true
+func SetTaskIsCompletedTrue(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили PUT request
 	if r.Method != http.MethodPut {
 		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
@@ -416,8 +416,8 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Устанавливает флаг обозначающий выполнение задачи в значение false
-func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
+// SetTaskIsCompletedFalse устанавливает флаг обозначающий выполнение задачи в значение false
+func SetTaskIsCompletedFalse(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили PUT request
 	if r.Method != http.MethodPut {
 		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
