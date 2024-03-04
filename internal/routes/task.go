@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -66,7 +67,7 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -150,7 +151,7 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, updateTask.TaskDescription, claims.Issuer, updateTask.TaskNumber)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -232,7 +233,7 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -395,7 +396,7 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -478,7 +479,7 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return

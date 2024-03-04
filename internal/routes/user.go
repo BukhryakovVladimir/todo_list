@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -87,7 +88,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// QueryRowContext выполняет первый запрос и возвращает user_id
 	err = tx.QueryRowContext(ctx, userQuery, user.Username).Scan(&userID)
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			tx.Rollback()
 			log.Println("signup_userDB QueryRowContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
@@ -110,7 +111,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// ExecContext выполнет второй запрос используя user_id возвращённый первым запросом
 	_, err = tx.ExecContext(ctx, credentialsQuery, userID, string(password))
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			tx.Rollback()
 			log.Println("signup_userDB ExecContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
@@ -125,7 +126,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// Комит транзакции
 	err = tx.Commit()
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			tx.Rollback()
 			log.Println("signup_userDB Commit deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
