@@ -49,6 +49,7 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -63,6 +64,7 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -107,6 +109,7 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
 			_, err = w.Write(resp)
 			if err != nil {
@@ -200,6 +203,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -221,6 +225,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -235,6 +240,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -256,6 +262,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -272,11 +279,12 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &tokenCookie)
-	resp, err := json.Marshal("Successfully loged in")
+	resp, err := json.Marshal("Successfully logged in")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(resp)
 	if err != nil {
@@ -301,6 +309,7 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -316,6 +325,7 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -336,6 +346,7 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, err = w.Write(resp)
 		if err != nil {
@@ -348,6 +359,7 @@ func FindUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write(resp)
 		if err != nil {
