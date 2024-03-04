@@ -6,30 +6,30 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/routes"
 )
 
-// Устанавливает маршруты
+// SetupRoutes устанавливает маршруты
 func SetupRoutes(r chi.Router) {
 	r.Use(corsMiddleware)
 
 	//Go-chi маршрутизатор
 	r.Route("/api", func(r chi.Router) {
 
-		r.Post("/write", routes.Write_taskDB)
+		r.Post("/write", routes.WriteTask)
 
-		r.Put("/update", routes.Update_taskDB)
+		r.Put("/update", routes.UpdateTask)
 
-		r.Delete("/delete", routes.Delete_taskDB)
+		r.Delete("/delete", routes.DeleteTask)
 
-		r.Get("/read", routes.Read_taskDB)
+		r.Get("/read", routes.ReadTask)
 
-		r.Put("/setIsCompletedTrue", routes.SetIsCompletedTrue_taskDB)
+		r.Put("/setIsCompletedTrue", routes.SetTaskIsCompletedTrue)
 
-		r.Put("/setIsCompletedFalse", routes.SetIsCompletedFalse_taskDB)
+		r.Put("/setIsCompletedFalse", routes.SetTaskIsCompletedFalse)
 
-		r.Post("/signup", routes.Signup_userDB)
+		r.Post("/signup", routes.SignupUser)
 
-		r.Post("/login", routes.Login_userDB)
+		r.Post("/login", routes.LoginUser)
 
-		r.Get("/user", routes.User_userDB)
+		r.Get("/user", routes.FindUser)
 
 	})
 }

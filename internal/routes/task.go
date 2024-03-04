@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -13,8 +14,8 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-// Записывает task_description в таблицу task
-func Write_taskDB(w http.ResponseWriter, r *http.Request) {
+// WriteTask записывает task_description в таблицу task
+func WriteTask(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
@@ -30,8 +31,12 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -42,8 +47,12 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -66,7 +75,7 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -82,12 +91,16 @@ func Write_taskDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Обновляет task_description
-func Update_taskDB(w http.ResponseWriter, r *http.Request) {
+// UpdateTask обновляет task_description
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	// Используем r.Method чтобы удостовериться что получили PUT request
 	if r.Method != http.MethodPut {
@@ -101,9 +114,14 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 
 	bytesBody, err := io.ReadAll(r.Body)
 
-	json.Unmarshal(bytesBody, &updateTask)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(bytesBody, &updateTask)
+	if err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -114,8 +132,12 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -126,8 +148,12 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -150,7 +176,7 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, updateTask.TaskDescription, claims.Issuer, updateTask.TaskNumber)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -166,12 +192,16 @@ func Update_taskDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Удаляет строку таблицы task по номеру строки.
-func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
+// DeleteTask удаляет строку таблицы task по номеру строки.
+func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили DELETE request
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Invalid HTTP method. Use DELETE.", http.StatusMethodNotAllowed)
@@ -188,8 +218,12 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -200,8 +234,12 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -232,7 +270,7 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -248,12 +286,16 @@ func Delete_taskDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Возвращает строки task_descirption из таблицы task
-func Read_taskDB(w http.ResponseWriter, r *http.Request) {
+// ReadTask возвращает строки task_description из таблицы task
+func ReadTask(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили GET request
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP method. Use GET.", http.StatusMethodNotAllowed)
@@ -270,8 +312,12 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -282,8 +328,12 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -328,12 +378,16 @@ func Read_taskDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Устанавливает флаг обозначающий выполнение задачи в значение true
-func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
+// SetTaskIsCompletedTrue устанавливает флаг обозначающий выполнение задачи в значение true
+func SetTaskIsCompletedTrue(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили PUT request
 	if r.Method != http.MethodPut {
 		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
@@ -350,8 +404,12 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -362,8 +420,12 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -395,7 +457,7 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -411,12 +473,16 @@ func SetIsCompletedTrue_taskDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Устанавливает флаг обозначающий выполнение задачи в значение false
-func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
+// SetTaskIsCompletedFalse устанавливает флаг обозначающий выполнение задачи в значение false
+func SetTaskIsCompletedFalse(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили PUT request
 	if r.Method != http.MethodPut {
 		http.Error(w, "Invalid HTTP method. Use PUT.", http.StatusMethodNotAllowed)
@@ -433,8 +499,12 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -445,8 +515,12 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -478,7 +552,7 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 	_, err = db.ExecContext(ctx, query, claims.Issuer, stringBody)
 
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("Database query time limit exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -494,6 +568,10 @@ func SetIsCompletedFalse_taskDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }

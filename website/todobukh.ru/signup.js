@@ -52,10 +52,10 @@ signupForm.addEventListener("submit", (e) => {
 
           invalidUsername.style.visibility = "visible";
           invalidPassword.style.visibility = "hidden";
-          break;  
+          break;
         case "Password should have at least 8 characters and include both English letters and digits. Special characters optionally.":
           invalidUsername.innerHTML = "Invalid Username placeholder";
-          invalidPassword.innerHTML = "Длина пароля должна быть не менее 8-и символов. Пароль должен содержать в себе буквы латинского алфавита и цифры. Специальные сиволы опциональны.";
+          invalidPassword.innerHTML = "Длина пароля должна быть не менее 8-ми символов. Пароль должен содержать в себе буквы латинского алфавита и цифры. Специальные символы опциональны.";
 
           invalidUsername.style.visibility = "hidden";
           invalidPassword.style.visibility = "visible";

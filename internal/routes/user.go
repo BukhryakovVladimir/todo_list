@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -15,10 +16,10 @@ import (
 	"github.com/BukhryakovVladimir/todo_list/internal/model"
 )
 
-// Добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials.
+// SignupUser добавляет user_id, username в таблицу user и добавляет user_id, password в таблицу credentials.
 // Обе операции должны выполнится, поэтому находятся в одной транзакции.
 // Отношение таблиц	 1 to 1
-func Signup_userDB(w http.ResponseWriter, r *http.Request) {
+func SignupUser(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
@@ -48,8 +49,12 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -59,8 +64,12 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -77,31 +86,42 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	tx, err := db.BeginTx(ctx, nil)
+
 	if err != nil {
 		http.Error(w, "Error starting transaction", http.StatusInternalServerError)
 		return
 	}
+
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Printf("Failed to rollback transaction: %v\n", err)
+			}
+		}
+	}()
 
 	var userID int
 
 	// QueryRowContext выполняет первый запрос и возвращает user_id
 	err = tx.QueryRowContext(ctx, userQuery, user.Username).Scan(&userID)
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			tx.Rollback()
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("signup_userDB QueryRowContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
 		} else {
-			tx.Rollback()
 			// Используется вместо http.Error чтобы не было ошибки на фронте.
 			resp, err := json.Marshal("Username is taken")
 			if err != nil {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
-			w.Write(resp)
+			_, err = w.Write(resp)
+			if err != nil {
+				log.Printf("Write failed: %v\n", err)
+			}
 			//http.Error(w, "Username is taken", http.StatusConflict) Будет выводить ошибку на фронте. Не менять.
 			return
 		}
@@ -110,13 +130,11 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// ExecContext выполнет второй запрос используя user_id возвращённый первым запросом
 	_, err = tx.ExecContext(ctx, credentialsQuery, userID, string(password))
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			tx.Rollback()
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("signup_userDB ExecContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
 		} else {
-			tx.Rollback()
 			http.Error(w, "Error inserting credentials", http.StatusInternalServerError)
 			return
 		}
@@ -125,8 +143,7 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 	// Комит транзакции
 	err = tx.Commit()
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			tx.Rollback()
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			log.Println("signup_userDB Commit deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
@@ -144,11 +161,14 @@ func Signup_userDB(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Аутентифицирует пользователя.
-func Login_userDB(w http.ResponseWriter, r *http.Request) {
+// LoginUser аутентифицирует пользователя.
+func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method. Use POST.", http.StatusMethodNotAllowed)
@@ -160,10 +180,14 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 
 	bytesBody, err := io.ReadAll(r.Body)
 
-	json.Unmarshal(bytesBody, &user)
-
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(bytesBody, &user)
+	if err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -175,7 +199,10 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 					  FROM credentials
 					  WHERE user_id = $1`
 
-	row := db.QueryRow(queryUsername, user.Username)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+	defer cancel()
+
+	row := db.QueryRowContext(ctx, queryUsername, user.Username)
 	var userId string
 	if err := row.Scan(&userId); err != nil {
 		resp, err := json.Marshal("Username not found")
@@ -183,8 +210,12 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -193,7 +224,7 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row = db.QueryRow(queryPassword, userId)
+	row = db.QueryRowContext(ctx, queryPassword, userId)
 	var password_hash string
 	if err := row.Scan(&password_hash); err != nil {
 		resp, err := json.Marshal("Username not found")
@@ -201,8 +232,12 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -212,8 +247,12 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -230,8 +269,12 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -243,17 +286,21 @@ func Login_userDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &tokenCookie)
-	resp, err := json.Marshal("Successfully loged in")
+	resp, err := json.Marshal("Successfully logged in")
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
 }
 
-// Находит и выводит имя пользователя с помощью jwt cookie.
-func User_userDB(w http.ResponseWriter, r *http.Request) {
+// FindUser находит и выводит имя пользователя с помощью jwt cookie.
+func FindUser(w http.ResponseWriter, r *http.Request) {
 	// Используем r.Method чтобы удостовериться что получили GET request
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP method. Use GET.", http.StatusMethodNotAllowed)
@@ -269,8 +316,12 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 	token, err := jwtCheck(cookie)
@@ -281,8 +332,12 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	}
 
@@ -292,14 +347,21 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 
 	var username string
 
-	if err := db.QueryRow(query, claims.Issuer).Scan(&username); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(queryTimeLimit)*time.Second)
+	defer cancel()
+
+	if err := db.QueryRowContext(ctx, query, claims.Issuer).Scan(&username); err != nil {
 		resp, err := json.Marshal("Username not found")
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 		return
 	} else {
 		resp, err := json.Marshal(username)
@@ -307,8 +369,12 @@ func User_userDB(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Printf("Write failed: %v\n", err)
+		}
 	}
 }
 
