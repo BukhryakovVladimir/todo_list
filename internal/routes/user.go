@@ -86,10 +86,19 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	tx, err := db.BeginTx(ctx, nil)
+
 	if err != nil {
 		http.Error(w, "Error starting transaction", http.StatusInternalServerError)
 		return
 	}
+
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Printf("Failed to rollback transaction: %v\n", err)
+			}
+		}
+	}()
 
 	var userID int
 
@@ -97,12 +106,10 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 	err = tx.QueryRowContext(ctx, userQuery, user.Username).Scan(&userID)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			tx.Rollback()
 			log.Println("signup_userDB QueryRowContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
 		} else {
-			tx.Rollback()
 			// Используется вместо http.Error чтобы не было ошибки на фронте.
 			resp, err := json.Marshal("Username is taken")
 			if err != nil {
@@ -124,12 +131,10 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 	_, err = tx.ExecContext(ctx, credentialsQuery, userID, string(password))
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			tx.Rollback()
 			log.Println("signup_userDB ExecContext deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
 		} else {
-			tx.Rollback()
 			http.Error(w, "Error inserting credentials", http.StatusInternalServerError)
 			return
 		}
@@ -139,7 +144,6 @@ func SignupUser(w http.ResponseWriter, r *http.Request) {
 	err = tx.Commit()
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			tx.Rollback()
 			log.Println("signup_userDB Commit deadline exceeded: ", err)
 			http.Error(w, "Database query time limit exceeded", http.StatusGatewayTimeout)
 			return
