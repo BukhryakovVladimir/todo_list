@@ -111,9 +111,14 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	bytesBody, err := io.ReadAll(r.Body)
 
-	json.Unmarshal(bytesBody, &updateTask)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(bytesBody, &updateTask)
+	if err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
