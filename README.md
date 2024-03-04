@@ -4,7 +4,7 @@ To build and run the project, use:
 docker-compose up --build
 ```
 
-To run locally, replace the nginx conf file content at `todo_list\website\nginx\sites-enabled` with:
+To run locally, replace the nginx conf file content at `todo_list\website\nginx\sites-enabled\todobukh.conf` with:
 
 ```nginx
 server {
