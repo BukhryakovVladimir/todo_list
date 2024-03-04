@@ -22,7 +22,7 @@ var (
 	jwtName        string
 )
 
-// Парсит JWT токен из переданного HTTP cookie используя секретный ключ secretKey
+// jwtCheck парсит JWT токен из переданного HTTP cookie используя секретный ключ secretKey
 func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(cookie.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
@@ -31,12 +31,12 @@ func jwtCheck(cookie *http.Cookie) (*jwt.Token, error) {
 	return token, err
 }
 
-// Создаёт пул соединений с БД
+// InitConnPool создаёт пул соединений с БД
 func InitConnPool() error {
 	var err error
 	strQueryTimeLimit := os.Getenv("QUERY_TIME_LIMIT")
 	if strQueryTimeLimit == "" {
-		return errors.New("Environment variable QUERY_TIME_LIMIT is empty.")
+		return errors.New("environment variable QUERY_TIME_LIMIT is empty")
 	}
 	queryTimeLimit, err = strconv.Atoi(strQueryTimeLimit)
 	if err != nil {
@@ -44,11 +44,11 @@ func InitConnPool() error {
 	}
 	secretKey = os.Getenv("SECRET_KEY")
 	if secretKey == "" {
-		return errors.New("Environment variable SECRET_KEY is empty.")
+		return errors.New("environment variable SECRET_KEY is empty")
 	}
 	jwtName = os.Getenv("JWT_NAME")
 	if jwtName == "" {
-		return errors.New("Environment variable JWT_NAME is empty.")
+		return errors.New("environment variable JWT_NAME is empty")
 	}
 
 	db, err = postgres.Dial()
