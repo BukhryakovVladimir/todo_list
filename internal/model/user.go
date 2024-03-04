@@ -1,6 +1,6 @@
 package model
 
-// Структура пользователя
+// User - это структура пользователя
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
