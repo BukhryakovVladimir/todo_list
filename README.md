@@ -2,6 +2,7 @@ To build and run project use
 >docker-compose up --build 
 
 To run locally replace nginx conf file content at todo_list\website\nginx\sites-enabled with:
+
 >server {
 >    listen 80;
 >    server_name localhost;
